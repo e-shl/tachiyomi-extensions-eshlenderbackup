@@ -451,7 +451,7 @@ class Remanga : ConfigurableSource, HttpSource() {
 
     private fun filterPaid(tempChaptersList: MutableList<SChapter>): MutableList<SChapter> {
         return if (!preferences.getBoolean(PAID_PREF, false)) {
-            val lastEx = tempChaptersList.find { it.scanlator.equals("exmanga") or it.url.contains("#is_bought") or !it.name.contains("\uD83D\uDCB2") }
+            val lastEx = tempChaptersList.find { !it.name.contains("\uD83D\uDCB2") }
             tempChaptersList.filterNot {
                 it.name.contains("\uD83D\uDCB2") && if (lastEx != null) {
                     val volCor = it.name.substringBefore(
