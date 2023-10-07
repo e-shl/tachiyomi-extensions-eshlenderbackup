@@ -440,6 +440,9 @@ class Remanga : ConfigurableSource, HttpSource() {
             val series = json.decodeFromJsonElement<MangaDetDto>(content)
             branches[series.dir] = series.branches
             mangaIDs[series.dir] = series.id
+            if (parseStatus(series.status.id) == SManga.LICENSED && series.branches.maxByOrNull { selector(it) }!!.count_chapters == 0) {
+                throw Exception("Лицензировано - Нет глав")
+            }
             series.branches
         } else {
             emptyList()
