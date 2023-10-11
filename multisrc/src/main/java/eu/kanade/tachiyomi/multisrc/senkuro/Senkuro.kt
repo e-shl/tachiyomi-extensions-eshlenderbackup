@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.multisrc.senkuro
 
-import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -32,7 +31,7 @@ abstract class Senkuro(
     final override val lang: String,
 ) : HttpSource() {
 
-    override val supportsLatest = true
+    override val supportsLatest = false
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("User-Agent", "Tachiyomi (+https://github.com/tachiyomiorg/tachiyomi)")
@@ -43,12 +42,12 @@ abstract class Senkuro(
             .rateLimit(5)
             .build()
 
-    private val count = 30
+    private val offsetCount = 20
 
     override fun popularMangaRequest(page: Int): Request {
         val payload = GraphQL(
             SEARCH_QUERY,
-            SearchVariables(),
+            SearchVariables(offset = offsetCount * (page - 1)),
         )
 
         val requestBody = payload.toJsonRequestBody()
@@ -61,7 +60,7 @@ abstract class Senkuro(
             .toRequestBody(JSON_MEDIA_TYPE)
 
     override fun popularMangaParse(response: Response) = searchMangaParse(response)
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/projects/updates?only_bookmarks=false&size=$count&page=$page", headers)
+    override fun latestUpdatesRequest(page: Int): Request = throw NotImplementedError("Unused")
 
     override fun latestUpdatesParse(response: Response): MangasPage = popularMangaParse(response)
 
@@ -74,7 +73,7 @@ abstract class Senkuro(
     }
 
     private fun mangaTachiyomiInfoDto.toSearchManga(): SManga {
-        return eu.kanade.tachiyomi.source.model.SManga.create().apply {
+        return SManga.create().apply {
             title = titles[0].content
             url = id
             thumbnail_url = cover?.original?.url
@@ -82,15 +81,18 @@ abstract class Senkuro(
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        return POST(
-            "https://neo.newmanga.org/catalogue",
-            body = """""".toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull()),
-            headers = headers,
+        val payload = GraphQL(
+            SEARCH_QUERY,
+            SearchVariables(query = query,offset = offsetCount * (page - 1)),
         )
+
+        val requestBody = payload.toJsonRequestBody()
+
+        return POST(baseUrl, headers, requestBody)
     }
 
     private fun mangaTachiyomiInfoDto.toSManga(): SManga {
-        return eu.kanade.tachiyomi.source.model.SManga.create().apply {
+        return SManga.create().apply {
             title = titles[0].content
             url = id
             thumbnail_url = cover?.original?.url
@@ -100,7 +102,7 @@ abstract class Senkuro(
     override fun mangaDetailsRequest(manga: SManga): Request {
         val payload = GraphQL(
             DETAILS_QUERY,
-            FetchDetailsVariables(manga.url),
+            FetchDetailsVariables(mangaId = manga.url),
         )
 
         val requestBody = payload.toJsonRequestBody()
@@ -146,7 +148,7 @@ abstract class Senkuro(
     override fun chapterListRequest(manga: SManga): Request {
         val payload = GraphQL(
             CHAPTERS_QUERY,
-            FetchDetailsVariables(manga.url),
+            FetchDetailsVariables(mangaId = manga.url),
         )
 
         val requestBody = payload.toJsonRequestBody()
@@ -158,7 +160,7 @@ abstract class Senkuro(
         val mangaChapterId=chapter.url.split(",,")
         val payload = GraphQL(
             CHAPTERS_PAGES_QUERY,
-            FetchChapterPagesVariables(mangaChapterId[0],mangaChapterId[1]),
+            FetchChapterPagesVariables(mangaId = mangaChapterId[0],chapterId = mangaChapterId[1]),
         )
 
         val requestBody = payload.toJsonRequestBody()

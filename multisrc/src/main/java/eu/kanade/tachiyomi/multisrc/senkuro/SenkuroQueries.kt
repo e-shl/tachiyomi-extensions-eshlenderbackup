@@ -17,6 +17,7 @@ private fun buildQuery(queryAction: () -> String): String {
 @Serializable
 data class SearchVariables(
     val query: String? = null,
+    val offset: Int? = null,
 )
 
 val SEARCH_QUERY: String = buildQuery {
@@ -28,6 +29,7 @@ val SEARCH_QUERY: String = buildQuery {
             %translationStatus: MangaTachiyomiSearchTranslationStatusFilter,
             %genre: MangaTachiyomiSearchGenreFilter,
             %tag: MangaTachiyomiSearchTagFilter,
+            %offset: Int,
         ) {
             mangaTachiyomiSearch(
                  query:%query,
@@ -36,6 +38,7 @@ val SEARCH_QUERY: String = buildQuery {
                  translationStatus: %translationStatus,
                  genre: %genre,
                  tag: %tag,
+                 offset: %offset,
         ) {
             mangas {
                 id
