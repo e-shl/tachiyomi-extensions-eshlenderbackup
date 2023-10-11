@@ -1,9 +1,8 @@
 package eu.kanade.tachiyomi.multisrc.senkuro
 
-import android.annotation.TargetApi
-import android.os.Build
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -124,13 +123,22 @@ abstract class Senkuro(
             Date().time
         }
     }
-    override fun chapterListParse(response: Response): List<SChapter> {
-        var chaptersList = json.decodeFromString<PageWrapperDto<mangaTachiyomiChaptersDto>>(response.body.string())
+
+    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
+        return client.newCall(chapterListRequest(manga))
+            .asObservableSuccess()
+            .map { response ->
+                chapterListParse(response, manga)
+            }
+    }
+    override fun chapterListParse(response: Response) = throw UnsupportedOperationException("chapterListParse(response: Response, manga: SManga)")
+    private fun chapterListParse(response: Response, manga: SManga): List<SChapter> {
+        val chaptersList = json.decodeFromString<PageWrapperDto<mangaTachiyomiChaptersDto>>(response.body.string())
         return chaptersList.data.mangaTachiyomiChapters.chapters.map { chapter ->
             SChapter.create().apply {
                 chapter_number = chapter.number.toFloatOrNull()  ?: -2F
                 name = "${chapter.volume}. Глава ${chapter.number} " + (chapter.name ?: "")
-                url = chapter.id
+                url = "${manga.url},,${chapter.id}"
                 date_upload = parseDate(chapter.updatedAt)
             }
         }
@@ -146,28 +154,35 @@ abstract class Senkuro(
         return POST(baseUrl, headers, requestBody)
     }
 
-    @TargetApi(Build.VERSION_CODES.N)
     override fun pageListRequest(chapter: SChapter): Request {
-        return GET(baseUrl + "/chapters/${chapter.url.substringAfterLast("/")}/pages", headers)
+        val mangaChapterId=chapter.url.split(",,")
+        val payload = GraphQL(
+            CHAPTERS_PAGES_QUERY,
+            FetchChapterPagesVariables(mangaChapterId[0],mangaChapterId[1]),
+        )
+
+        val requestBody = payload.toJsonRequestBody()
+
+        return POST(baseUrl, headers, requestBody)
     }
 
     override fun getChapterUrl(chapter: SChapter): String {
         return baseUrl + chapter.url
     }
 
-    override fun pageListParse(response: Response): List<Page> = throw Exception("Not used")
-
-    override fun fetchImageUrl(page: Page): Observable<String> {
-        return Observable.just(page.url)
+    override fun pageListParse(response: Response): List<Page> {
+        val imageList = json.decodeFromString<PageWrapperDto<mangaTachiyomiChapterPages>>(response.body.string())
+        return imageList.data.mangaTachiyomiChapterPages.pages.mapIndexed{index,page->
+            Page(index, "", page.url)
+        }
     }
 
     override fun imageUrlRequest(page: Page): Request = throw NotImplementedError("Unused")
 
     override fun imageUrlParse(response: Response): String = throw NotImplementedError("Unused")
 
-    override fun imageRequest(page: Page): Request {
-        val refererHeaders = headersBuilder().build()
-        return GET(page.imageUrl!!, refererHeaders)
+    override fun fetchImageUrl(page: Page): Observable<String> {
+        return Observable.just(page.url)
     }
 
     companion object {

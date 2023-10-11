@@ -70,6 +70,22 @@ data class mangaTachiyomiChaptersDto(
     }
 }
 
+// Chapter Pages
+@Serializable
+data class mangaTachiyomiChapterPages(
+    val mangaTachiyomiChapterPages: ChaptersPages,
+){
+    @Serializable
+    data class ChaptersPages(
+        val pages: List<UrlDto>,
+    ){
+        @Serializable
+        data class UrlDto(
+            val url: String,
+        )
+    }
+}
+
 
 
 

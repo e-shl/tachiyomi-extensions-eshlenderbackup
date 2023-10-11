@@ -121,3 +121,21 @@ val CHAPTERS_QUERY: String = buildQuery {
             }
     """
 }
+
+@Serializable
+data class FetchChapterPagesVariables(
+    val mangaId: String? = null,
+    val chapterId: String? = null,
+)
+
+val CHAPTERS_PAGES_QUERY: String = buildQuery {
+    """
+        query fetchTachiyomiChapterPages(%mangaId: ID!, %chapterId: ID!) {
+                         mangaTachiyomiChapterPages(mangaId: %mangaId,chapterId: %chapterId) {
+   	                                                            pages {
+                                                                        url
+                                                                 }
+                                        }
+                        }
+    """
+}
