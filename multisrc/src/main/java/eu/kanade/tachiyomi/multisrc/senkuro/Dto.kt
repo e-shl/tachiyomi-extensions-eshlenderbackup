@@ -8,11 +8,11 @@ data class PageWrapperDto<T>(
 
 // Library Container
 @Serializable
-data class mangaTachiyomiSearchDto<T>(
-    val mangaTachiyomiSearch: mangasDto<T>,
+data class MangaTachiyomiSearchDto<T>(
+    val mangaTachiyomiSearch: MangasDto<T>,
 ){
     @Serializable
-    data class mangasDto<T>(
+    data class MangasDto<T>(
         val mangas: List<T>,
     )
 }
@@ -21,15 +21,17 @@ data class mangaTachiyomiSearchDto<T>(
 // Manga Details
 @Serializable
 data class SubInfoDto(
-    val mangaTachiyomiInfo: mangaTachiyomiInfoDto,
+    val mangaTachiyomiInfo: MangaTachiyomiInfoDto,
 )
 
 @Serializable
-data class mangaTachiyomiInfoDto(
+data class MangaTachiyomiInfoDto(
     val id: String,
     val slug: String,
     val cover: SubImgDto? = null,
+    val status: String?  = null,
     val titles: List<TitleDto>,
+    val localizations: List<LocalizationsDto>? = null,
 ) {
     @Serializable
     data class SubImgDto(
@@ -46,11 +48,17 @@ data class mangaTachiyomiInfoDto(
         val lang: String,
         val content: String,
     )
+
+    @Serializable
+    data class LocalizationsDto(
+        val lang: String,
+        val description: String,
+    )
 }
 
 // Chapters
 @Serializable
-data class mangaTachiyomiChaptersDto(
+data class MangaTachiyomiChaptersDto(
     val mangaTachiyomiChapters: ChaptersMessage,
 ){
     @Serializable
@@ -72,7 +80,7 @@ data class mangaTachiyomiChaptersDto(
 
 // Chapter Pages
 @Serializable
-data class mangaTachiyomiChapterPages(
+data class MangaTachiyomiChapterPages(
     val mangaTachiyomiChapterPages: ChaptersPages,
 ){
     @Serializable

@@ -65,19 +65,11 @@ abstract class Senkuro(
     override fun latestUpdatesParse(response: Response): MangasPage = popularMangaParse(response)
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val page = json.decodeFromString<PageWrapperDto<mangaTachiyomiSearchDto<mangaTachiyomiInfoDto>>>(response.body.string())
+        val page = json.decodeFromString<PageWrapperDto<MangaTachiyomiSearchDto<MangaTachiyomiInfoDto>>>(response.body.string())
         val mangasList = page.data.mangaTachiyomiSearch.mangas.map {
-            it.toSearchManga()
+            it.toSManga()
         }
         return MangasPage(mangasList, mangasList.isNotEmpty())
-    }
-
-    private fun mangaTachiyomiInfoDto.toSearchManga(): SManga {
-        return SManga.create().apply {
-            title = titles[0].content
-            url = id
-            thumbnail_url = cover?.original?.url
-        }
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
@@ -91,24 +83,40 @@ abstract class Senkuro(
         return POST(baseUrl, headers, requestBody)
     }
 
-    private fun mangaTachiyomiInfoDto.toSManga(): SManga {
-        return SManga.create().apply {
-            title = titles[0].content
-            url = id
-            thumbnail_url = cover?.original?.url
+    private fun parseStatus(status: String?): Int {
+        return when (status) {
+            "FINISHED" -> SManga.COMPLETED
+            "ONGOING"-> SManga.ONGOING
+            "HIATUS" -> SManga.ON_HIATUS
+            "ANNOUNCE" -> SManga.ONGOING
+            "CANCELLED" -> SManga.CANCELLED
+            else -> SManga.UNKNOWN
         }
     }
 
-    override fun mangaDetailsRequest(manga: SManga): Request {
+    private fun MangaTachiyomiInfoDto.toSManga(): SManga {
+        val o = this
+        return SManga.create().apply {
+            title = titles.find { it.lang == "RU" }?.content ?: titles.find { it.lang == "EN" }?.content ?: titles[0].content
+            url = "$id,,$slug"
+            thumbnail_url = cover?.original?.url
+            description = localizations?.find { it.lang == "RU" }?.description
+            status = parseStatus(o.status)
+        }
+    }
+
+    override fun mangaDetailsRequest(manga: SManga): Request     {
         val payload = GraphQL(
             DETAILS_QUERY,
-            FetchDetailsVariables(mangaId = manga.url),
+            FetchDetailsVariables(mangaId = manga.url.split(",,")[0]),
         )
 
         val requestBody = payload.toJsonRequestBody()
 
         return POST(baseUrl, headers, requestBody)
     }
+
+    override fun getMangaUrl(manga: SManga) = baseUrl.replace("api.", "").replace("/graphql", "/manga/") + manga.url.split(",,")[1]
 
     override fun mangaDetailsParse(response: Response): SManga {
         val series = json.decodeFromString<PageWrapperDto<SubInfoDto>>(response.body.string())
@@ -135,12 +143,12 @@ abstract class Senkuro(
     }
     override fun chapterListParse(response: Response) = throw UnsupportedOperationException("chapterListParse(response: Response, manga: SManga)")
     private fun chapterListParse(response: Response, manga: SManga): List<SChapter> {
-        val chaptersList = json.decodeFromString<PageWrapperDto<mangaTachiyomiChaptersDto>>(response.body.string())
+        val chaptersList = json.decodeFromString<PageWrapperDto<MangaTachiyomiChaptersDto>>(response.body.string())
         return chaptersList.data.mangaTachiyomiChapters.chapters.map { chapter ->
             SChapter.create().apply {
                 chapter_number = chapter.number.toFloatOrNull()  ?: -2F
                 name = "${chapter.volume}. Глава ${chapter.number} " + (chapter.name ?: "")
-                url = "${manga.url},,${chapter.id}"
+                url = "${manga.url.split(",,")[0]},,${chapter.id}"
                 date_upload = parseDate(chapter.updatedAt)
             }
         }
@@ -148,7 +156,7 @@ abstract class Senkuro(
     override fun chapterListRequest(manga: SManga): Request {
         val payload = GraphQL(
             CHAPTERS_QUERY,
-            FetchDetailsVariables(mangaId = manga.url),
+            FetchDetailsVariables(mangaId = manga.url.split(",,")[0]),
         )
 
         val requestBody = payload.toJsonRequestBody()
@@ -173,7 +181,7 @@ abstract class Senkuro(
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val imageList = json.decodeFromString<PageWrapperDto<mangaTachiyomiChapterPages>>(response.body.string())
+        val imageList = json.decodeFromString<PageWrapperDto<MangaTachiyomiChapterPages>>(response.body.string())
         return imageList.data.mangaTachiyomiChapterPages.pages.mapIndexed{index,page->
             Page(index, "", page.url)
         }
