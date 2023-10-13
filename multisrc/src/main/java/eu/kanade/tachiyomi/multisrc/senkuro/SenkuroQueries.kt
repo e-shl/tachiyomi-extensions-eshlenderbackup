@@ -17,6 +17,8 @@ private fun buildQuery(queryAction: () -> String): String {
 @Serializable
 data class SearchVariables(
     val query: String? = null,
+    val genre: String? = null,
+    val tag: String? = null,
     val offset: Int? = null,
 )
 
@@ -147,5 +149,53 @@ val CHAPTERS_PAGES_QUERY: String = buildQuery {
                                                                  }
                                         }
                         }
+    """
+}
+
+@Serializable
+data class MangaTachiyomiSearchFilters(
+    val mangaTachiyomiSearchFilters: FilterDto,
+){
+    @Serializable
+    data class FilterDto(
+        val genres: List<FilterDataDto>,
+        val tags: List<FilterDataDto>,
+    ){
+        @Serializable
+        data class FilterDataDto(
+            val slug: String,
+            val titles: List<TitleDto>,
+        ){
+            @Serializable
+            data class TitleDto(
+                val lang: String,
+                val content: String,
+            )
+        }
+    }
+}
+
+val FILTERS_QUERY: String = buildQuery {
+    """
+        query fetchTachiyomiSearchFilters {
+                mangaTachiyomiSearchFilters {
+                                genres {
+                                id
+                                slug
+                                titles {
+                                    lang
+                                    content
+                                }
+                              }
+                              tags {
+                                id
+                                slug
+                                titles {
+                                    lang
+                                    content
+                                }
+                              }
+                            }
+                          }
     """
 }

@@ -1,14 +1,17 @@
 package eu.kanade.tachiyomi.multisrc.senkuro
 
+import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
+import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -19,9 +22,11 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import org.jsoup.nodes.Document
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
+import java.util.Collections.list
 import java.util.Date
 import java.util.Locale
 
@@ -43,27 +48,39 @@ abstract class Senkuro(
             .build()
 
     private val offsetCount = 20
-
-    override fun popularMangaRequest(page: Int): Request {
-        val payload = GraphQL(
-            SEARCH_QUERY,
-            SearchVariables(offset = offsetCount * (page - 1)),
-        )
-
-        val requestBody = payload.toJsonRequestBody()
-
-        return POST(baseUrl, headers, requestBody)
-    }
-
     private inline fun <reified T : Any> T.toJsonRequestBody(): RequestBody =
         json.encodeToString(this)
             .toRequestBody(JSON_MEDIA_TYPE)
 
+    // Popular
+    override fun popularMangaRequest(page: Int): Request {
+        val requestBody = GraphQL(
+            SEARCH_QUERY,
+            SearchVariables(offset = offsetCount * (page - 1)),
+        ).toJsonRequestBody()
+
+        if (page==1) {
+            fetchTachiyomiSearchFilters()
+        }
+
+        return POST(baseUrl, headers, requestBody)
+    }
     override fun popularMangaParse(response: Response) = searchMangaParse(response)
+    // Latest
     override fun latestUpdatesRequest(page: Int): Request = throw NotImplementedError("Unused")
 
-    override fun latestUpdatesParse(response: Response): MangasPage = popularMangaParse(response)
+    override fun latestUpdatesParse(response: Response): MangasPage = throw NotImplementedError("Unused")
 
+    // Search
+
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        val requestBody = GraphQL(
+            SEARCH_QUERY,
+            SearchVariables(query = query,offset = offsetCount * (page - 1)),
+        ).toJsonRequestBody()
+
+        return POST(baseUrl, headers, requestBody)
+    }
     override fun searchMangaParse(response: Response): MangasPage {
         val page = json.decodeFromString<PageWrapperDto<MangaTachiyomiSearchDto<MangaTachiyomiInfoDto>>>(response.body.string())
         val mangasList = page.data.mangaTachiyomiSearch.mangas.map {
@@ -72,17 +89,7 @@ abstract class Senkuro(
         return MangasPage(mangasList, mangasList.isNotEmpty())
     }
 
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val payload = GraphQL(
-            SEARCH_QUERY,
-            SearchVariables(query = query,offset = offsetCount * (page - 1)),
-        )
-
-        val requestBody = payload.toJsonRequestBody()
-
-        return POST(baseUrl, headers, requestBody)
-    }
-
+    // Details
     private fun parseStatus(status: String?): Int {
         return when (status) {
             "FINISHED" -> SManga.COMPLETED
@@ -106,23 +113,22 @@ abstract class Senkuro(
     }
 
     override fun mangaDetailsRequest(manga: SManga): Request     {
-        val payload = GraphQL(
+        val requestBody = GraphQL(
             DETAILS_QUERY,
             FetchDetailsVariables(mangaId = manga.url.split(",,")[0]),
-        )
-
-        val requestBody = payload.toJsonRequestBody()
+        ).toJsonRequestBody()
 
         return POST(baseUrl, headers, requestBody)
     }
-
-    override fun getMangaUrl(manga: SManga) = baseUrl.replace("api.", "").replace("/graphql", "/manga/") + manga.url.split(",,")[1]
 
     override fun mangaDetailsParse(response: Response): SManga {
         val series = json.decodeFromString<PageWrapperDto<SubInfoDto>>(response.body.string())
         return series.data.mangaTachiyomiInfo.toSManga()
     }
 
+    override fun getMangaUrl(manga: SManga) = baseUrl.replace("api.", "").replace("/graphql", "/manga/") + manga.url.split(",,")[1]
+
+    // Chapters
     private val simpleDateFormat by lazy { SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S", Locale.ROOT) }
 
     private fun parseDate(date: String?): Long {
@@ -156,24 +162,21 @@ abstract class Senkuro(
         }
     }
     override fun chapterListRequest(manga: SManga): Request {
-        val payload = GraphQL(
+        val requestBody = GraphQL(
             CHAPTERS_QUERY,
             FetchDetailsVariables(mangaId = manga.url.split(",,")[0]),
-        )
-
-        val requestBody = payload.toJsonRequestBody()
+        ).toJsonRequestBody()
 
         return POST(baseUrl, headers, requestBody)
     }
 
+    // Pages
     override fun pageListRequest(chapter: SChapter): Request {
         val mangaChapterId=chapter.url.split(",,")
-        val payload = GraphQL(
+        val requestBody = GraphQL(
             CHAPTERS_PAGES_QUERY,
             FetchChapterPagesVariables(mangaId = mangaChapterId[0],chapterId = mangaChapterId[2]),
-        )
-
-        val requestBody = payload.toJsonRequestBody()
+        ).toJsonRequestBody()
 
         return POST(baseUrl, headers, requestBody)
     }
@@ -198,9 +201,46 @@ abstract class Senkuro(
         return Observable.just(page.url)
     }
 
+    // Filters
+    private fun fetchTachiyomiSearchFilters() {
+        val responseBody = client.newCall(POST(baseUrl,headers,GraphQL(
+            FILTERS_QUERY,
+            SearchVariables(),
+        ).toJsonRequestBody())).execute().body.string()
+
+        val filterDto = json.decodeFromString<PageWrapperDto<MangaTachiyomiSearchFilters>>(responseBody).data.mangaTachiyomiSearchFilters
+
+        genresList = filterDto.genres.map { genre->
+            Genre(genre.titles.find { it.lang == "RU" }!!.content, genre.slug)
+        }
+
+        tagsList = filterDto.tags.map { tag->
+            Genre(tag.titles.find { it.lang == "RU" }!!.content, tag.slug)
+        }
+    }
+
+    override fun getFilterList() = FilterList(
+        GenreFilter(getGenreList()),
+        TagFilter(getTagList()),
+    )
+
+    private class Genre(name: String, val id: String) : Filter.CheckBox(name)
+    private class GenreFilter(genres: List<Genre>) : Filter.Group<Genre>("Жанры", genres)
+    private class TagFilter(tags: List<Genre>) : Filter.Group<Genre>("Тэги", tags)
+
+    private var genresList: List<Genre>? = null
+    private var tagsList: List<Genre>? = null
+    private fun getGenreList(): List<Genre> {
+        return genresList ?: listOf(Genre("Нажмите сброс, чтобы загрузить Жанры.", ""))
+    }
+    private fun getTagList(): List<Genre> {
+        return tagsList ?: listOf(Genre("Нажмите сброс, чтобы загрузить Тэги.", ""))
+    }
+
     companion object {
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
     }
+
 
     private val json: Json by injectLazy()
 
