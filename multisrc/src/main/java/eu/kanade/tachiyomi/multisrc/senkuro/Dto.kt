@@ -65,15 +65,24 @@ data class MangaTachiyomiChaptersDto(
     data class ChaptersMessage(
         val message: String? = null,
         val chapters: List<BookDto>,
+        val teams: List<TeamsDto>,
     ){
         @Serializable
         data class BookDto(
             val id: String,
+            val slug: String,
             val branchId: String,
             val name: String? = null,
+            val teamIds: List<String>,
             val number: String,
             val volume: String,
             val updatedAt: String,
+        )
+        @Serializable
+        data class TeamsDto(
+            val id: String,
+            val slug: String,
+            val name: String,
         )
     }
 }

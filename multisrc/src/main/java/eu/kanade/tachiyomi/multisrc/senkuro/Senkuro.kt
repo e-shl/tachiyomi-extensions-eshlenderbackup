@@ -98,7 +98,7 @@ abstract class Senkuro(
         val o = this
         return SManga.create().apply {
             title = titles.find { it.lang == "RU" }?.content ?: titles.find { it.lang == "EN" }?.content ?: titles[0].content
-            url = "$id,,$slug"
+            url = "$id,,$slug" //mangaId[0],,mangaSlug[1]
             thumbnail_url = cover?.original?.url
             description = localizations?.find { it.lang == "RU" }?.description
             status = parseStatus(o.status)
@@ -144,12 +144,14 @@ abstract class Senkuro(
     override fun chapterListParse(response: Response) = throw UnsupportedOperationException("chapterListParse(response: Response, manga: SManga)")
     private fun chapterListParse(response: Response, manga: SManga): List<SChapter> {
         val chaptersList = json.decodeFromString<PageWrapperDto<MangaTachiyomiChaptersDto>>(response.body.string())
+        val teamsList = chaptersList.data.mangaTachiyomiChapters.teams
         return chaptersList.data.mangaTachiyomiChapters.chapters.map { chapter ->
             SChapter.create().apply {
                 chapter_number = chapter.number.toFloatOrNull()  ?: -2F
                 name = "${chapter.volume}. Глава ${chapter.number} " + (chapter.name ?: "")
-                url = "${manga.url.split(",,")[0]},,${chapter.id}"
+                url = "${manga.url},,${chapter.id},,${chapter.slug}" //mangaId[0],,mangaSlug[1],,chapterId[2],,chapterSlug[3]
                 date_upload = parseDate(chapter.updatedAt)
+                scanlator = teamsList.find{it.id == chapter.teamIds[0]}!!.name
             }
         }
     }
@@ -168,7 +170,7 @@ abstract class Senkuro(
         val mangaChapterId=chapter.url.split(",,")
         val payload = GraphQL(
             CHAPTERS_PAGES_QUERY,
-            FetchChapterPagesVariables(mangaId = mangaChapterId[0],chapterId = mangaChapterId[1]),
+            FetchChapterPagesVariables(mangaId = mangaChapterId[0],chapterId = mangaChapterId[2]),
         )
 
         val requestBody = payload.toJsonRequestBody()
@@ -177,7 +179,8 @@ abstract class Senkuro(
     }
 
     override fun getChapterUrl(chapter: SChapter): String {
-        return baseUrl + chapter.url
+        val mangaChapterSlug = chapter.url.split(",,")
+        return baseUrl.replace("api.", "").replace("/graphql", "/manga/") + mangaChapterSlug[1] + "/chapters/" + mangaChapterSlug[3]
     }
 
     override fun pageListParse(response: Response): List<Page> {

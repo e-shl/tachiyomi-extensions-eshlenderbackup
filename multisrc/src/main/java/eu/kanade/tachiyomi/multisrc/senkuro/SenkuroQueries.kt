@@ -114,12 +114,19 @@ val CHAPTERS_QUERY: String = buildQuery {
                         message
                         chapters {
                             id
+                            slug
                             branchId
                             name
+                            teamIds
                             number
                             volume
                             updatedAt
                         }
+                        teams {
+                                id
+                                slug
+                                name
+                            }
                    }
             }
     """
