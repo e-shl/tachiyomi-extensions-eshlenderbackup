@@ -197,7 +197,7 @@ abstract class Senkuro(
             }
             author = mainStaff?.filter {it.roles.contains("STORY")}?.joinToString(", ") { it.person.name }
             artist = mainStaff?.filter {it.roles.contains("ART")}?.joinToString(", ") { it.person.name }
-            description = altName + localizations?.find { it.lang == "RU" }?.description
+            description = altName + localizations?.find { it.lang == "RU" }?.description.orEmpty()
             status = parseStatus(o.status)
             genre = (getTypeList().find{it.slug==type}?.name+", "+
                 getAgeList().find{it.slug==rating}?.name+", "+
