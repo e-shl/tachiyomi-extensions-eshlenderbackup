@@ -184,6 +184,12 @@ abstract class Senkuro(
             thumbnail_url = cover?.original?.url
             description = localizations?.find { it.lang == "RU" }?.description
             status = parseStatus(o.status)
+            genre = (getTypeList().find{it.slug==type}?.name+", "+
+                getAgeList().find{it.slug==rating}?.name+", "+
+                getFormatList().filter { formats.orEmpty().contains(it.slug) }.joinToString { it.name }+", "+
+                genres?.joinToString { git-> git.titles.find { it.lang == "RU" }!!.content }+", "+
+                tags?.joinToString { tit-> tit.titles.find { it.lang == "RU" }!!.content }
+                ).split(", ").filter { it.isNotEmpty() }.joinToString { it.trim().capitalize() }
         }
     }
 

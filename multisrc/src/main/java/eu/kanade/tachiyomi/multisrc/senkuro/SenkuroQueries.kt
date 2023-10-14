@@ -111,8 +111,21 @@ val DETAILS_QUERY: String = buildQuery {
                                  description
                         }
                         type
+                        rating
                         status
                         formats
+                        genres {  slug
+                                titles {
+                                        lang
+                                        content
+                                        }
+                             }
+                        tags {  slug
+                                titles {
+                                        lang
+                                        content
+                                        }
+                             }
                         translationStatus
                         cover {
                                 original {
