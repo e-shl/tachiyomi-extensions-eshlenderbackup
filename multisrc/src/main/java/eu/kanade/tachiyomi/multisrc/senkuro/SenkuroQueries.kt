@@ -17,10 +17,21 @@ private fun buildQuery(queryAction: () -> String): String {
 @Serializable
 data class SearchVariables(
     val query: String? = null,
-    val genre: String? = null,
-    val tag: String? = null,
+    val type: FiltersDto? = null,
+    val status: FiltersDto? = null,
+    val translationStatus: FiltersDto? = null,
+    val genre: FiltersDto? = null,
+    val tag: FiltersDto? = null,
+    val format: FiltersDto? = null,
+    val rating: FiltersDto? = null,
     val offset: Int? = null,
-)
+){
+    @Serializable
+    data class FiltersDto(
+        val include: List<String>? = null,
+        val exclude: List<String>? = null,
+    )
+}
 
 val SEARCH_QUERY: String = buildQuery {
     """
@@ -31,6 +42,8 @@ val SEARCH_QUERY: String = buildQuery {
             %translationStatus: MangaTachiyomiSearchTranslationStatusFilter,
             %genre: MangaTachiyomiSearchGenreFilter,
             %tag: MangaTachiyomiSearchTagFilter,
+            %format: MangaTachiyomiSearchGenreFilter,
+            %rating: MangaTachiyomiSearchTagFilter,
             %offset: Int,
         ) {
             mangaTachiyomiSearch(
@@ -40,6 +53,8 @@ val SEARCH_QUERY: String = buildQuery {
                  translationStatus: %translationStatus,
                  genre: %genre,
                  tag: %tag,
+                 format: %format,
+                 rating: %rating,
                  offset: %offset,
         ) {
             mangas {

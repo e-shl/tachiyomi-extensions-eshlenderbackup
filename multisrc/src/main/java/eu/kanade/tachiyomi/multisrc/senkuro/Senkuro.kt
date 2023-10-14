@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.multisrc.senkuro
 
-import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -11,7 +10,6 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
-import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -22,11 +20,9 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import org.jsoup.nodes.Document
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
-import java.util.Collections.list
 import java.util.Date
 import java.util.Locale
 
@@ -74,9 +70,87 @@ abstract class Senkuro(
     // Search
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        val includeGenres = mutableListOf<String>()
+        val excludeGenres = mutableListOf<String>()
+        val includeTags = mutableListOf<String>()
+        val excludeTags = mutableListOf<String>()
+        val includeTypes = mutableListOf<String>()
+        val excludeTypes = mutableListOf<String>()
+        val includeFormats = mutableListOf<String>()
+        val excludeFormats = mutableListOf<String>()
+        val includeStatus = mutableListOf<String>()
+        val excludeStatus = mutableListOf<String>()
+        val includeTStatus = mutableListOf<String>()
+        val excludeTStatus = mutableListOf<String>()
+        val includeAges = mutableListOf<String>()
+        val excludeAges = mutableListOf<String>()
+
+        (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
+            when (filter) {
+                is GenreList -> filter.state.forEach { genre ->
+                    if (genre.state != Filter.TriState.STATE_IGNORE) {
+                        if (genre.isIncluded()) includeGenres.add(genre.slug) else excludeGenres.add(genre.slug)
+                    }
+                }
+                is TagList -> filter.state.forEach { tag ->
+                    if (tag.state != Filter.TriState.STATE_IGNORE) {
+                        if (tag.isIncluded()) includeTags.add(tag.slug) else excludeTags.add(tag.slug)
+                    }
+                }
+                is TypeList -> filter.state.forEach { type ->
+                    if (type.state != Filter.TriState.STATE_IGNORE) {
+                        if (type.isIncluded()) includeTypes.add(type.slug) else excludeTypes.add(type.slug)
+                    }
+                }
+                is FormatList -> filter.state.forEach { format ->
+                    if (format.state != Filter.TriState.STATE_IGNORE) {
+                        if (format.isIncluded()) includeFormats.add(format.slug) else excludeFormats.add(format.slug)
+                    }
+                }
+                is StatList -> filter.state.forEach { stat ->
+                    if (stat.state != Filter.TriState.STATE_IGNORE) {
+                        if (stat.isIncluded()) includeStatus.add(stat.slug) else excludeStatus.add(stat.slug)
+                    }
+                }
+                is StatTranslateList -> filter.state.forEach { tstat ->
+                    if (tstat.state != Filter.TriState.STATE_IGNORE) {
+                        if (tstat.isIncluded()) includeTStatus.add(tstat.slug) else excludeTStatus.add(tstat.slug)
+                    }
+                }
+                is AgeList -> filter.state.forEach { age ->
+                    if (age.state != Filter.TriState.STATE_IGNORE) {
+                        if (age.isIncluded()) includeAges.add(age.slug) else excludeAges.add(age.slug)
+                    }
+                }
+                else -> {}
+            }
+        }
         val requestBody = GraphQL(
             SEARCH_QUERY,
-            SearchVariables(query = query,offset = offsetCount * (page - 1)),
+            SearchVariables(query = query,offset = offsetCount * (page - 1),
+                genre = SearchVariables.FiltersDto(
+                    includeGenres,
+                    excludeGenres,
+            ), tag = SearchVariables.FiltersDto(
+                    includeTags,
+                    excludeTags,
+            ), type = SearchVariables.FiltersDto(
+                    includeTypes,
+                    excludeTypes,
+            ), format = SearchVariables.FiltersDto(
+                    includeFormats,
+                    excludeFormats,
+            ), status = SearchVariables.FiltersDto(
+                    includeStatus,
+                    excludeStatus,
+            ), translationStatus = SearchVariables.FiltersDto(
+                    includeTStatus,
+                    excludeTStatus,
+            ), rating = SearchVariables.FiltersDto(
+                    includeAges,
+                    excludeAges,
+                )
+            ),
         ).toJsonRequestBody()
 
         return POST(baseUrl, headers, requestBody)
@@ -86,6 +160,7 @@ abstract class Senkuro(
         val mangasList = page.data.mangaTachiyomiSearch.mangas.map {
             it.toSManga()
         }
+
         return MangasPage(mangasList, mangasList.isNotEmpty())
     }
 
@@ -211,31 +286,90 @@ abstract class Senkuro(
         val filterDto = json.decodeFromString<PageWrapperDto<MangaTachiyomiSearchFilters>>(responseBody).data.mangaTachiyomiSearchFilters
 
         genresList = filterDto.genres.map { genre->
-            Genre(genre.titles.find { it.lang == "RU" }!!.content, genre.slug)
+            FilterersTri(genre.titles.find { it.lang == "RU" }!!.content.capitalize(), genre.slug)
         }
 
         tagsList = filterDto.tags.map { tag->
-            Genre(tag.titles.find { it.lang == "RU" }!!.content, tag.slug)
+            FilterersTri(tag.titles.find { it.lang == "RU" }!!.content.capitalize(), tag.slug)
         }
     }
 
     override fun getFilterList() = FilterList(
-        GenreFilter(getGenreList()),
-        TagFilter(getTagList()),
+        if (genresList.isEmpty() or tagsList.isEmpty())
+        {
+            listOf(
+                Filter.Header("Нажмите сброс, чтобы загрузить все фильтры"),
+            )
+        }else {
+            listOf(
+                GenreList(getGenreList()),
+                TagList(getTagList()),
+                TypeList(getTypeList()),
+                FormatList(getFormatList()),
+                StatList(getStatList()),
+                StatTranslateList(getStatTranslateList()),
+                AgeList(getAgeList()),
+            )
+        }
+
     )
 
-    private class Genre(name: String, val id: String) : Filter.CheckBox(name)
-    private class GenreFilter(genres: List<Genre>) : Filter.Group<Genre>("Жанры", genres)
-    private class TagFilter(tags: List<Genre>) : Filter.Group<Genre>("Тэги", tags)
+    private class FilterersTri(name: String, val slug: String) : Filter.TriState(name)
+    private class GenreList(genres: List<FilterersTri>) : Filter.Group<FilterersTri>("Жанры", genres)
+    private class TagList(tags: List<FilterersTri>) : Filter.Group<FilterersTri>("Тэги", tags)
+    private class TypeList(types: List<FilterersTri>) : Filter.Group<FilterersTri>("Тип", types)
+    private class FormatList(formats: List<FilterersTri>) : Filter.Group<FilterersTri>("Формат", formats)
+    private class StatList(status: List<FilterersTri>) : Filter.Group<FilterersTri>("Статус", status)
+    private class StatTranslateList(tstatus: List<FilterersTri>) : Filter.Group<FilterersTri>("Статус перевода", tstatus)
+    private class AgeList(ages: List<FilterersTri>) : Filter.Group<FilterersTri>("Возрастное ограничени", ages)
 
-    private var genresList: List<Genre>? = null
-    private var tagsList: List<Genre>? = null
-    private fun getGenreList(): List<Genre> {
-        return genresList ?: listOf(Genre("Нажмите сброс, чтобы загрузить Жанры.", ""))
+    private var genresList: List<FilterersTri> = listOf()
+    private var tagsList: List<FilterersTri> = listOf()
+    private fun getGenreList(): List<FilterersTri> {
+        return genresList
     }
-    private fun getTagList(): List<Genre> {
-        return tagsList ?: listOf(Genre("Нажмите сброс, чтобы загрузить Тэги.", ""))
+    private fun getTagList(): List<FilterersTri> {
+        return tagsList
     }
+    private fun getTypeList() = listOf(
+        FilterersTri("Манга", "MANGA"),
+        FilterersTri("Манхва", "MANHWA"),
+        FilterersTri("Маньхуа", "MANHUA"),
+        FilterersTri("Комикс", "COMICS"),
+        FilterersTri("OEL Манга", "OEL_MANGA"),
+        FilterersTri("РуМанга", "RU_MANGA"),
+    )
+    private fun getStatList() = listOf(
+        FilterersTri("Анонс", "ANNOUNCE"),
+        FilterersTri("Онгоинг", "ONGOING"),
+        FilterersTri("Выпущено", "FINISHED"),
+        FilterersTri("Приостановлено", "HIATUS"),
+        FilterersTri("Отменено", "CANCELLED"),
+    )
+
+    private fun getStatTranslateList() = listOf(
+        FilterersTri("Переводится", "IN_PROGRESS"),
+        FilterersTri("Завершён", "FINISHED"),
+        FilterersTri("Заморожен", "FROZEN"),
+        FilterersTri("Заброшен", "ABANDONED"),
+    )
+
+    private fun getAgeList() = listOf(
+        FilterersTri("0+", "GENERAL"),
+        FilterersTri("12+", "SENSITIVE"),
+        FilterersTri("16+", "QUESTIONABLE"),
+        FilterersTri("18+", "EXPLICIT"),
+    )
+    private fun getFormatList() = listOf(
+        FilterersTri("Сборник", "DIGEST"),
+        FilterersTri("Додзинси", "DOUJINSHI"),
+        FilterersTri("В цвете", "IN_COLOR"),
+        FilterersTri("Сингл", "SINGLE"),
+        FilterersTri("Веб", "WEB"),
+        FilterersTri("Вебтун", "WEBTOON"),
+        FilterersTri("Ёнкома", "YONKOMA"),
+        FilterersTri("Short", "SHORT"),
+    )
 
     companion object {
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
