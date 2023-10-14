@@ -182,7 +182,11 @@ abstract class Senkuro(
             title = titles.find { it.lang == "RU" }?.content ?: titles.find { it.lang == "EN" }?.content ?: titles[0].content
             url = "$id,,$slug" //mangaId[0],,mangaSlug[1]
             thumbnail_url = cover?.original?.url
-            description = localizations?.find { it.lang == "RU" }?.description
+            var altName = alternativeNames?.joinToString(" / ") { it.content }
+            if (!altName.isNullOrEmpty()) {
+                altName = "Альтернативные названия:\n$altName\n\n"
+            }
+            description = altName + localizations?.find { it.lang == "RU" }?.description
             status = parseStatus(o.status)
             genre = (getTypeList().find{it.slug==type}?.name+", "+
                 getAgeList().find{it.slug==rating}?.name+", "+
