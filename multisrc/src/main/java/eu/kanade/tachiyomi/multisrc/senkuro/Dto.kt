@@ -10,7 +10,7 @@ data class PageWrapperDto<T>(
 @Serializable
 data class MangaTachiyomiSearchDto<T>(
     val mangaTachiyomiSearch: MangasDto<T>,
-){
+) {
     @Serializable
     data class MangasDto<T>(
         val mangas: List<T>,
@@ -71,13 +71,13 @@ data class MangaTachiyomiInfoDto(
 @Serializable
 data class MangaTachiyomiChaptersDto(
     val mangaTachiyomiChapters: ChaptersMessage,
-){
+) {
     @Serializable
     data class ChaptersMessage(
         val message: String? = null,
         val chapters: List<BookDto>,
         val teams: List<TeamsDto>,
-    ){
+    ) {
         @Serializable
         data class BookDto(
             val id: String,
@@ -102,11 +102,11 @@ data class MangaTachiyomiChaptersDto(
 @Serializable
 data class MangaTachiyomiChapterPages(
     val mangaTachiyomiChapterPages: ChaptersPages,
-){
+) {
     @Serializable
     data class ChaptersPages(
         val pages: List<UrlDto>,
-    ){
+    ) {
         @Serializable
         data class UrlDto(
             val url: String,

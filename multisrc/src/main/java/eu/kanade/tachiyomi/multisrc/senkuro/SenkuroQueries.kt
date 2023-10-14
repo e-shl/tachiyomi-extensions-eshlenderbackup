@@ -25,7 +25,7 @@ data class SearchVariables(
     val format: FiltersDto? = null,
     val rating: FiltersDto? = null,
     val offset: Int? = null,
-){
+) {
     @Serializable
     data class FiltersDto(
         val include: List<String>? = null,
@@ -183,17 +183,17 @@ val CHAPTERS_PAGES_QUERY: String = buildQuery {
 @Serializable
 data class MangaTachiyomiSearchFilters(
     val mangaTachiyomiSearchFilters: FilterDto,
-){
+) {
     @Serializable
     data class FilterDto(
         val genres: List<FilterDataDto>,
         val tags: List<FilterDataDto>,
-    ){
+    ) {
         @Serializable
         data class FilterDataDto(
             val slug: String,
             val titles: List<TitleDto>,
-        ){
+        ) {
             @Serializable
             data class TitleDto(
                 val lang: String,
