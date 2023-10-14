@@ -52,7 +52,10 @@ abstract class Senkuro(
     override fun popularMangaRequest(page: Int): Request {
         val requestBody = GraphQL(
             SEARCH_QUERY,
-            SearchVariables(offset = offsetCount * (page - 1)),
+            SearchVariables(offset = offsetCount * (page - 1), genre = SearchVariables.FiltersDto(
+                // Senkuro eternal built-in exclude 18+ filter
+                exclude =  if (name == "Senkuro"){ listOf("hentai") } else { listOf() }
+            )),
         ).toJsonRequestBody()
 
         if (page==1) {
@@ -125,28 +128,34 @@ abstract class Senkuro(
                 else -> {}
             }
         }
+
+        // Senkuro eternal built-in exclude 18+ filter
+        if (name == "Senkuro"){
+            excludeGenres.add("hentai")
+        }
+
         val requestBody = GraphQL(
             SEARCH_QUERY,
             SearchVariables(query = query,offset = offsetCount * (page - 1),
                 genre = SearchVariables.FiltersDto(
                     includeGenres,
                     excludeGenres,
-            ), tag = SearchVariables.FiltersDto(
+            ),  tag = SearchVariables.FiltersDto(
                     includeTags,
                     excludeTags,
-            ), type = SearchVariables.FiltersDto(
+            ),  type = SearchVariables.FiltersDto(
                     includeTypes,
                     excludeTypes,
-            ), format = SearchVariables.FiltersDto(
+            ),  format = SearchVariables.FiltersDto(
                     includeFormats,
                     excludeFormats,
-            ), status = SearchVariables.FiltersDto(
+            ),  status = SearchVariables.FiltersDto(
                     includeStatus,
                     excludeStatus,
-            ), translationStatus = SearchVariables.FiltersDto(
+            ),  translationStatus = SearchVariables.FiltersDto(
                     includeTStatus,
                     excludeTStatus,
-            ), rating = SearchVariables.FiltersDto(
+            ),  rating = SearchVariables.FiltersDto(
                     includeAges,
                     excludeAges,
                 )
