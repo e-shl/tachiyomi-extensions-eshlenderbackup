@@ -38,6 +38,7 @@ data class MangaTachiyomiInfoDto(
     val titles: List<TitleDto>,
     val alternativeNames: List<TitleDto>?  = null,
     val localizations: List<LocalizationsDto>? = null,
+    val mainStaff: List<MainStaffDto>? = null,
 ) {
     @Serializable
     data class SubImgDto(
@@ -53,18 +54,26 @@ data class MangaTachiyomiInfoDto(
         val slug: String,
         val titles: List<TitleDto>,
     )
-
     @Serializable
     data class TitleDto(
         val lang: String,
         val content: String,
     )
-
     @Serializable
     data class LocalizationsDto(
         val lang: String,
         val description: String,
     )
+    @Serializable
+    data class MainStaffDto(
+        val roles: List<String>,
+        val person: PersonDto,
+    ) {
+        @Serializable
+        data class PersonDto(
+            val name: String,
+        )
+    }
 }
 
 // Chapters

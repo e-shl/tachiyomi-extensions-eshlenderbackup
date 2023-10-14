@@ -195,6 +195,8 @@ abstract class Senkuro(
             if (!altName.isNullOrEmpty()) {
                 altName = "Альтернативные названия:\n$altName\n\n"
             }
+            author = mainStaff?.filter {it.roles.contains("STORY")}?.joinToString(", ") { it.person.name }
+            artist = mainStaff?.filter {it.roles.contains("ART")}?.joinToString(", ") { it.person.name }
             description = altName + localizations?.find { it.lang == "RU" }?.description
             status = parseStatus(o.status)
             genre = (getTypeList().find{it.slug==type}?.name+", "+

@@ -132,6 +132,12 @@ val DETAILS_QUERY: String = buildQuery {
                                        url
                                 }
                         }
+                        mainStaff {
+                                roles
+                                person {
+                                            name
+                                       }
+                                  }
                 }
         }
     """
