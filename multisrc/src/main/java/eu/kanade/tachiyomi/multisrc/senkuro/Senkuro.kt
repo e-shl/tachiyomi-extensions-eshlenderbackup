@@ -140,22 +140,22 @@ abstract class Senkuro(
                 genre = SearchVariables.FiltersDto(
                     includeGenres,
                     excludeGenres,
-            ),  tag = SearchVariables.FiltersDto(
+                ),  tag = SearchVariables.FiltersDto(
                     includeTags,
                     excludeTags,
-            ),  type = SearchVariables.FiltersDto(
+                ),  type = SearchVariables.FiltersDto(
                     includeTypes,
                     excludeTypes,
-            ),  format = SearchVariables.FiltersDto(
+                ),  format = SearchVariables.FiltersDto(
                     includeFormats,
                     excludeFormats,
-            ),  status = SearchVariables.FiltersDto(
+                ),  status = SearchVariables.FiltersDto(
                     includeStatus,
                     excludeStatus,
-            ),  translationStatus = SearchVariables.FiltersDto(
+                ),  translationStatus = SearchVariables.FiltersDto(
                     includeTStatus,
                     excludeTStatus,
-            ),  rating = SearchVariables.FiltersDto(
+                ),  rating = SearchVariables.FiltersDto(
                     includeAges,
                     excludeAges,
                 )
