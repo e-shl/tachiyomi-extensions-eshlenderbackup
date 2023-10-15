@@ -17,7 +17,6 @@ data class MangaTachiyomiSearchDto<T>(
     )
 }
 
-
 // Manga Details
 @Serializable
 data class SubInfoDto(
@@ -29,14 +28,14 @@ data class MangaTachiyomiInfoDto(
     val id: String,
     val slug: String,
     val cover: SubImgDto? = null,
-    val status: String?  = null,
-    val type: String?  = null,
-    val rating: String?  = null,
-    val formats: List<String>?  = null,
-    val genres: List<TagsDto>?  = null,
-    val tags: List<TagsDto>?  = null,
+    val status: String? = null,
+    val type: String? = null,
+    val rating: String? = null,
+    val formats: List<String>? = null,
+    val genres: List<TagsDto>? = null,
+    val tags: List<TagsDto>? = null,
     val titles: List<TitleDto>,
-    val alternativeNames: List<TitleDto>?  = null,
+    val alternativeNames: List<TitleDto>? = null,
     val localizations: List<LocalizationsDto>? = null,
     val mainStaff: List<MainStaffDto>? = null,
 ) {
@@ -49,21 +48,25 @@ data class MangaTachiyomiInfoDto(
             val url: String? = null,
         )
     }
+
     @Serializable
     data class TagsDto(
         val slug: String,
         val titles: List<TitleDto>,
     )
+
     @Serializable
     data class TitleDto(
         val lang: String,
         val content: String,
     )
+
     @Serializable
     data class LocalizationsDto(
         val lang: String,
         val description: String,
     )
+
     @Serializable
     data class MainStaffDto(
         val roles: List<String>,
@@ -98,6 +101,7 @@ data class MangaTachiyomiChaptersDto(
             val volume: String,
             val updatedAt: String,
         )
+
         @Serializable
         data class TeamsDto(
             val id: String,

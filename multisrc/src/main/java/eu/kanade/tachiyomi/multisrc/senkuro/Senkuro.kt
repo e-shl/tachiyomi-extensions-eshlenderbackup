@@ -43,7 +43,6 @@ abstract class Senkuro(
             .rateLimit(5)
             .build()
 
-
     private inline fun <reified T : Any> T.toJsonRequestBody(): RequestBody =
         json.encodeToString(this)
             .toRequestBody(JSON_MEDIA_TYPE)
@@ -52,15 +51,19 @@ abstract class Senkuro(
     override fun popularMangaRequest(page: Int): Request {
         val requestBody = GraphQL(
             SEARCH_QUERY,
-            SearchVariables(offset = offsetCount * (page - 1), genre = SearchVariables.FiltersDto(
-                // Senkuro eternal built-in exclude 18+ filter
-                exclude =  if (name == "Senkuro"){ senkuroExcludeGenres } else { listOf() }
-            )),
+            SearchVariables(
+                offset = offsetCount * (page - 1),
+                genre = SearchVariables.FiltersDto(
+                    // Senkuro eternal built-in exclude 18+ filter
+                    exclude = if (name == "Senkuro") { senkuroExcludeGenres } else { listOf() },
+                ),
+            ),
         ).toJsonRequestBody()
 
         return POST(API_URL, headers, requestBody)
     }
     override fun popularMangaParse(response: Response) = searchMangaParse(response)
+
     // Latest
     override fun latestUpdatesRequest(page: Int): Request = throw NotImplementedError("Unused")
 
@@ -126,35 +129,42 @@ abstract class Senkuro(
         }
 
         // Senkuro eternal built-in exclude 18+ filter
-        if (name == "Senkuro"){
+        if (name == "Senkuro") {
             excludeGenres.addAll(senkuroExcludeGenres)
         }
 
         val requestBody = GraphQL(
             SEARCH_QUERY,
-            SearchVariables(query = query,offset = offsetCount * (page - 1),
+            SearchVariables(
+                query = query, offset = offsetCount * (page - 1),
                 genre = SearchVariables.FiltersDto(
                     includeGenres,
                     excludeGenres,
-                ),  tag = SearchVariables.FiltersDto(
+                ),
+                tag = SearchVariables.FiltersDto(
                     includeTags,
                     excludeTags,
-                ),  type = SearchVariables.FiltersDto(
+                ),
+                type = SearchVariables.FiltersDto(
                     includeTypes,
                     excludeTypes,
-                ),  format = SearchVariables.FiltersDto(
+                ),
+                format = SearchVariables.FiltersDto(
                     includeFormats,
                     excludeFormats,
-                ),  status = SearchVariables.FiltersDto(
+                ),
+                status = SearchVariables.FiltersDto(
                     includeStatus,
                     excludeStatus,
-                ),  translationStatus = SearchVariables.FiltersDto(
+                ),
+                translationStatus = SearchVariables.FiltersDto(
                     includeTStatus,
                     excludeTStatus,
-                ),  rating = SearchVariables.FiltersDto(
+                ),
+                rating = SearchVariables.FiltersDto(
                     includeAges,
                     excludeAges,
-                )
+                ),
             ),
         ).toJsonRequestBody()
 
@@ -177,7 +187,7 @@ abstract class Senkuro(
     private fun parseStatus(status: String?): Int {
         return when (status) {
             "FINISHED" -> SManga.COMPLETED
-            "ONGOING"-> SManga.ONGOING
+            "ONGOING" -> SManga.ONGOING
             "HIATUS" -> SManga.ON_HIATUS
             "ANNOUNCE" -> SManga.ONGOING
             "CANCELLED" -> SManga.CANCELLED
@@ -189,26 +199,27 @@ abstract class Senkuro(
         val o = this
         return SManga.create().apply {
             title = titles.find { it.lang == "RU" }?.content ?: titles.find { it.lang == "EN" }?.content ?: titles[0].content
-            url = "$id,,$slug" //mangaId[0],,mangaSlug[1]
+            url = "$id,,$slug" // mangaId[0],,mangaSlug[1]
             thumbnail_url = cover?.original?.url
             var altName = alternativeNames?.joinToString(" / ") { it.content }
             if (!altName.isNullOrEmpty()) {
                 altName = "Альтернативные названия:\n$altName\n\n"
             }
-            author = mainStaff?.filter {it.roles.contains("STORY")}?.joinToString(", ") { it.person.name }
-            artist = mainStaff?.filter {it.roles.contains("ART")}?.joinToString(", ") { it.person.name }
+            author = mainStaff?.filter { it.roles.contains("STORY") }?.joinToString(", ") { it.person.name }
+            artist = mainStaff?.filter { it.roles.contains("ART") }?.joinToString(", ") { it.person.name }
             description = altName + localizations?.find { it.lang == "RU" }?.description.orEmpty()
             status = parseStatus(o.status)
-            genre = (getTypeList().find{it.slug==type}?.name+", "+
-                getAgeList().find{it.slug==rating}?.name+", "+
-                getFormatList().filter { formats.orEmpty().contains(it.slug) }.joinToString { it.name }+", "+
-                genres?.joinToString { git-> git.titles.find { it.lang == "RU" }!!.content }+", "+
-                tags?.joinToString { tit-> tit.titles.find { it.lang == "RU" }!!.content }
+            genre = (
+                getTypeList().find { it.slug == type }?.name + ", " +
+                    getAgeList().find { it.slug == rating }?.name + ", " +
+                    getFormatList().filter { formats.orEmpty().contains(it.slug) }.joinToString { it.name } + ", " +
+                    genres?.joinToString { git -> git.titles.find { it.lang == "RU" }!!.content } + ", " +
+                    tags?.joinToString { tit -> tit.titles.find { it.lang == "RU" }!!.content }
                 ).split(", ").filter { it.isNotEmpty() }.joinToString { it.trim().capitalize() }
         }
     }
 
-    override fun mangaDetailsRequest(manga: SManga): Request     {
+    override fun mangaDetailsRequest(manga: SManga): Request {
         val requestBody = GraphQL(
             DETAILS_QUERY,
             FetchDetailsVariables(mangaId = manga.url.split(",,")[0]),
@@ -249,11 +260,11 @@ abstract class Senkuro(
         val teamsList = chaptersList.data.mangaTachiyomiChapters.teams
         return chaptersList.data.mangaTachiyomiChapters.chapters.map { chapter ->
             SChapter.create().apply {
-                chapter_number = chapter.number.toFloatOrNull()  ?: -2F
+                chapter_number = chapter.number.toFloatOrNull() ?: -2F
                 name = "${chapter.volume}. Глава ${chapter.number} " + (chapter.name ?: "")
-                url = "${manga.url},,${chapter.id},,${chapter.slug}" //mangaId[0],,mangaSlug[1],,chapterId[2],,chapterSlug[3]
+                url = "${manga.url},,${chapter.id},,${chapter.slug}" // mangaId[0],,mangaSlug[1],,chapterId[2],,chapterSlug[3]
                 date_upload = parseDate(chapter.updatedAt)
-                scanlator = teamsList.find{it.id == chapter.teamIds[0]}!!.name
+                scanlator = teamsList.find { it.id == chapter.teamIds[0] }!!.name
             }
         }
     }
@@ -268,10 +279,10 @@ abstract class Senkuro(
 
     // Pages
     override fun pageListRequest(chapter: SChapter): Request {
-        val mangaChapterId=chapter.url.split(",,")
+        val mangaChapterId = chapter.url.split(",,")
         val requestBody = GraphQL(
             CHAPTERS_PAGES_QUERY,
-            FetchChapterPagesVariables(mangaId = mangaChapterId[0],chapterId = mangaChapterId[2]),
+            FetchChapterPagesVariables(mangaId = mangaChapterId[0], chapterId = mangaChapterId[2]),
         ).toJsonRequestBody()
 
         return POST(API_URL, headers, requestBody)
@@ -284,7 +295,7 @@ abstract class Senkuro(
 
     override fun pageListParse(response: Response): List<Page> {
         val imageList = json.decodeFromString<PageWrapperDto<MangaTachiyomiChapterPages>>(response.body.string())
-        return imageList.data.mangaTachiyomiChapterPages.pages.mapIndexed{index,page->
+        return imageList.data.mangaTachiyomiChapterPages.pages.mapIndexed { index, page ->
             Page(index, "", page.url)
         }
     }
@@ -299,18 +310,23 @@ abstract class Senkuro(
 
     // Filters
     private fun fetchTachiyomiSearchFilters() {
-        val responseBody = client.newCall(POST(API_URL,headers,GraphQL(
-            FILTERS_QUERY,
-            SearchVariables(),
-        ).toJsonRequestBody())).execute().body.string()
+        val responseBody = client.newCall(
+            POST(
+                API_URL, headers,
+                GraphQL(
+                    FILTERS_QUERY,
+                    SearchVariables(),
+                ).toJsonRequestBody(),
+            ),
+        ).execute().body.string()
 
         val filterDto = json.decodeFromString<PageWrapperDto<MangaTachiyomiSearchFilters>>(responseBody).data.mangaTachiyomiSearchFilters
 
-        genresList = filterDto.genres.filterNot{ name == "Senkuro" && senkuroExcludeGenres.contains(it.slug) }.map { genre->
+        genresList = filterDto.genres.filterNot { name == "Senkuro" && senkuroExcludeGenres.contains(it.slug) }.map { genre ->
             FilterersTri(genre.titles.find { it.lang == "RU" }!!.content.capitalize(), genre.slug)
         }
 
-        tagsList = filterDto.tags.map { tag->
+        tagsList = filterDto.tags.map { tag ->
             FilterersTri(tag.titles.find { it.lang == "RU" }!!.content.capitalize(), tag.slug)
         }
     }
@@ -319,12 +335,11 @@ abstract class Senkuro(
     // We're only able to get filters after a loading the manga directory, and resetting
     // the filters is the only thing that seems to reinflate the view
     override fun getFilterList() = FilterList(
-        if (genresList.isEmpty() or tagsList.isEmpty())
-        {
+        if (genresList.isEmpty() or tagsList.isEmpty()) {
             listOf(
                 Filter.Header("Нажмите сброс, чтобы загрузить все фильтры"),
             )
-        }else {
+        } else {
             listOf(
                 GenreList(getGenreList()),
                 TagList(getTagList()),
@@ -334,9 +349,9 @@ abstract class Senkuro(
                 StatTranslateList(getStatTranslateList()),
                 AgeList(getAgeList()),
             )
-        }
+        },
 
-    )
+        )
 
     private class FilterersTri(name: String, val slug: String) : Filter.TriState(name)
     private class GenreList(genres: List<FilterersTri>) : Filter.Group<FilterersTri>("Жанры", genres)
@@ -398,11 +413,9 @@ abstract class Senkuro(
     companion object {
         private const val offsetCount = 20
         private const val API_URL = "https://api.senkuro.com/graphql"
-        private val senkuroExcludeGenres = listOf("hentai","yaoi","yuri","shoujo_ai","shounen_ai")
+        private val senkuroExcludeGenres = listOf("hentai", "yaoi", "yuri", "shoujo_ai", "shounen_ai")
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
     }
 
-
     private val json: Json by injectLazy()
-
 }
