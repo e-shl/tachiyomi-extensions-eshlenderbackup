@@ -54,13 +54,9 @@ abstract class Senkuro(
             SEARCH_QUERY,
             SearchVariables(offset = offsetCount * (page - 1), genre = SearchVariables.FiltersDto(
                 // Senkuro eternal built-in exclude 18+ filter
-                exclude =  if (name == "Senkuro"){ senkuroExclude } else { listOf() }
+                exclude =  if (name == "Senkuro"){ senkuroExcludeGenres } else { listOf() }
             )),
         ).toJsonRequestBody()
-
-        if (page==1) {
-            fetchTachiyomiSearchFilters()
-        }
 
         return POST(API_URL, headers, requestBody)
     }
@@ -131,7 +127,7 @@ abstract class Senkuro(
 
         // Senkuro eternal built-in exclude 18+ filter
         if (name == "Senkuro"){
-            excludeGenres.addAll(senkuroExclude)
+            excludeGenres.addAll(senkuroExcludeGenres)
         }
 
         val requestBody = GraphQL(
@@ -168,6 +164,10 @@ abstract class Senkuro(
         val page = json.decodeFromString<PageWrapperDto<MangaTachiyomiSearchDto<MangaTachiyomiInfoDto>>>(response.body.string())
         val mangasList = page.data.mangaTachiyomiSearch.mangas.map {
             it.toSManga()
+        }
+
+        if (genresList.isEmpty() or tagsList.isEmpty()) {
+            fetchTachiyomiSearchFilters()
         }
 
         return MangasPage(mangasList, mangasList.isNotEmpty())
@@ -306,7 +306,7 @@ abstract class Senkuro(
 
         val filterDto = json.decodeFromString<PageWrapperDto<MangaTachiyomiSearchFilters>>(responseBody).data.mangaTachiyomiSearchFilters
 
-        genresList = filterDto.genres.map { genre->
+        genresList = filterDto.genres.filterNot{ name == "Senkuro" && senkuroExcludeGenres.contains(it.slug) }.map { genre->
             FilterersTri(genre.titles.find { it.lang == "RU" }!!.content.capitalize(), genre.slug)
         }
 
@@ -398,7 +398,7 @@ abstract class Senkuro(
     companion object {
         private const val offsetCount = 20
         private const val API_URL = "https://api.senkuro.com/graphql"
-        private val senkuroExclude = listOf("hentai","yaoi","yuri","shoujo_ai","shounen_ai")
+        private val senkuroExcludeGenres = listOf("hentai","yaoi","yuri","shoujo_ai","shounen_ai")
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
     }
 
