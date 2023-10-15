@@ -335,8 +335,8 @@ abstract class Senkuro(
     // Filters are fetched immediately once an extension loads
     // We're only able to get filters after a loading the manga directory, and resetting
     // the filters is the only thing that seems to reinflate the view
-    override fun getFilterList() = FilterList(
-        if (genresList.isEmpty() or tagsList.isEmpty()) {
+    override fun getFilterList(): FilterList {
+        val filters = if (genresList.isEmpty() or tagsList.isEmpty()) {
             listOf(
                 Filter.Header("Нажмите сброс, чтобы загрузить все фильтры"),
             )
@@ -350,9 +350,9 @@ abstract class Senkuro(
                 StatTranslateList(getStatTranslateList()),
                 AgeList(getAgeList()),
             )
-        },
-
-        )
+        }
+        return FilterList(filters)
+    }
 
     private class FilterersTri(name: String, val slug: String) : Filter.TriState(name)
     private class GenreList(genres: List<FilterersTri>) : Filter.Group<FilterersTri>("Жанры", genres)
