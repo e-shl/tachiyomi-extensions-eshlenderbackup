@@ -312,7 +312,8 @@ abstract class Senkuro(
     private fun fetchTachiyomiSearchFilters() {
         val responseBody = client.newCall(
             POST(
-                API_URL, headers,
+                API_URL,
+                headers,
                 GraphQL(
                     FILTERS_QUERY,
                     SearchVariables(),
