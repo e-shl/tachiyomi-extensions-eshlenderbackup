@@ -43,7 +43,7 @@ abstract class Senkuro(
             .rateLimit(5)
             .build()
 
-    private val offsetCount = 20
+
     private inline fun <reified T : Any> T.toJsonRequestBody(): RequestBody =
         json.encodeToString(this)
             .toRequestBody(JSON_MEDIA_TYPE)
@@ -54,7 +54,7 @@ abstract class Senkuro(
             SEARCH_QUERY,
             SearchVariables(offset = offsetCount * (page - 1), genre = SearchVariables.FiltersDto(
                 // Senkuro eternal built-in exclude 18+ filter
-                exclude =  if (name == "Senkuro"){ listOf("hentai") } else { listOf() }
+                exclude =  if (name == "Senkuro"){ senkuroExclude } else { listOf() }
             )),
         ).toJsonRequestBody()
 
@@ -131,7 +131,7 @@ abstract class Senkuro(
 
         // Senkuro eternal built-in exclude 18+ filter
         if (name == "Senkuro"){
-            excludeGenres.add("hentai")
+            excludeGenres.addAll(senkuroExclude)
         }
 
         val requestBody = GraphQL(
@@ -396,7 +396,9 @@ abstract class Senkuro(
     )
 
     companion object {
+        private const val offsetCount = 20
         private const val API_URL = "https://api.senkuro.com/graphql"
+        private val senkuroExclude = listOf("hentai","yaoi","yuri","shoujo_ai","shounen_ai")
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
     }
 
