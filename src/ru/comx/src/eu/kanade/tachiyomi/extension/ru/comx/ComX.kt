@@ -267,7 +267,10 @@ class ComX : ParsedHttpSource() {
             ratingStar + " " + ratingValue + " (голосов: " + ratingVotes + ")\n" +
             Jsoup.parse(infoElement.select(".page__text ").first()!!.html().replace("<br>", "REPLACbR")).text().replace("REPLACbR", "\n")
 
-        val src = infoElement.select(".img-wide img").attr("data-src")
+        var src = infoElement.select(".img-wide img").attr("data-src")
+        if (src.isNullOrEmpty()) {
+            src = infoElement.select(".img-wide img").attr("src")
+        }
         if (src.contains("://")) {
             manga.thumbnail_url = src
         } else {
