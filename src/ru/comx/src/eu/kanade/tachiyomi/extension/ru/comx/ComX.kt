@@ -270,10 +270,14 @@ class ComX : ParsedHttpSource() {
                 ?.prepend("\\n")?.text()?.replace("\\n", "\n")?.replace("\n ", "\n")
                 .orEmpty()
 
-        var src = infoElement.select(".img-wide img").attr("data-src")
-        if (src.isNullOrEmpty()) {
-            src = infoElement.select(".img-wide img").attr("src")
+        var src = ""
+        infoElement.select(".img-wide img").let {
+            src = it.attr("data-src")
+            if (src.isEmpty()) {
+                src = it.attr("src")
+            }
         }
+
         if (src.contains("://")) {
             manga.thumbnail_url = src
         } else {
