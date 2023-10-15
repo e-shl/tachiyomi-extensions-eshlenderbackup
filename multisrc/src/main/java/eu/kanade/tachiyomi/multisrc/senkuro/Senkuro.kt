@@ -1,8 +1,15 @@
 package eu.kanade.tachiyomi.multisrc.senkuro
 
+import android.app.Application
+import android.content.SharedPreferences
+import android.util.Log
+import android.widget.Toast
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -21,6 +28,8 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -30,7 +39,11 @@ abstract class Senkuro(
     override val name: String,
     final override val baseUrl: String,
     final override val lang: String,
-) : HttpSource() {
+) : ConfigurableSource, HttpSource() {
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_${id}", 0x0000)
+    }
 
     override val supportsLatest = false
 
@@ -188,16 +201,22 @@ abstract class Senkuro(
     private fun MangaTachiyomiInfoDto.toSManga(): SManga {
         val o = this
         return SManga.create().apply {
-            title = titles.find { it.lang == "RU" }?.content ?: titles.find { it.lang == "EN" }?.content ?: titles[0].content
+            val titlesAll = mutableListOf<MangaTachiyomiInfoDto.TitleDto>()
+            titlesAll.addAll(titles)
+            if (alternativeNames != null) {
+                titlesAll.addAll(alternativeNames)
+            }
+            title = titlesAll.find { it.lang == baseLang }?.content ?: titlesAll.find { it.lang == altLang }?.content ?: titles[0].content
             url = "$id,,$slug" //mangaId[0],,mangaSlug[1]
             thumbnail_url = cover?.original?.url
-            var altName = alternativeNames?.joinToString(" / ") { it.content }
+            var altName = titlesAll.filterNot { it.content == title }.joinToString(" / ") { it.content }
             if (!altName.isNullOrEmpty()) {
                 altName = "Альтернативные названия:\n$altName\n\n"
             }
             author = mainStaff?.filter {it.roles.contains("STORY")}?.joinToString(", ") { it.person.name }
             artist = mainStaff?.filter {it.roles.contains("ART")}?.joinToString(", ") { it.person.name }
-            description = altName + localizations?.find { it.lang == "RU" }?.description.orEmpty()
+            description = titlesAll.filterNot { it.content == title }.find { it.lang == altLang }?.content.orEmpty() + "\n" +
+                altName + localizations?.find { it.lang == "RU" }?.description.orEmpty()
             status = parseStatus(o.status)
             genre = (getTypeList().find{it.slug==type}?.name+", "+
                 getAgeList().find{it.slug==rating}?.name+", "+
@@ -399,10 +418,34 @@ abstract class Senkuro(
         private const val offsetCount = 20
         private const val API_URL = "https://api.senkuro.com/graphql"
         private val senkuroExclude = listOf("hentai","yaoi","yuri","shoujo_ai","shounen_ai")
+
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
+
+        private const val LANGUAGE_PREF = "MangaTitleLanguage"
+        private val LANGUAGE_LIST = arrayOf("EN", "RU")
     }
 
 
     private val json: Json by injectLazy()
+
+    private var baseLang: String = preferences.getString(LANGUAGE_PREF, "EN")!!
+    private var altLang: String = LANGUAGE_LIST.filterNot { it == baseLang }[0]
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val titleLanguagePref = ListPreference(screen.context).apply {
+            key = LANGUAGE_PREF
+            title = "Выбор языка на обложке"
+            entries = arrayOf("Английский", "Русский")
+            entryValues = LANGUAGE_LIST
+            summary = "%s"
+            setDefaultValue("EN")
+            setOnPreferenceChangeListener { _, newValue ->
+                val titleLanguage = preferences.edit().putString(LANGUAGE_PREF, newValue as String).commit()
+                val warning = "Если язык обложки не изменился очистите базу данных в приложении (Настройки -> Дополнительно -> Очистить базу данных)"
+                Toast.makeText(screen.context, warning, Toast.LENGTH_LONG).show()
+                titleLanguage
+            }
+        }
+        screen.addPreference(titleLanguagePref)
+    }
 
 }
