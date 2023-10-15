@@ -62,7 +62,7 @@ abstract class Senkuro(
             fetchTachiyomiSearchFilters()
         }
 
-        return POST(baseUrl, headers, requestBody)
+        return POST(API_URL, headers, requestBody)
     }
     override fun popularMangaParse(response: Response) = searchMangaParse(response)
     // Latest
@@ -162,7 +162,7 @@ abstract class Senkuro(
             ),
         ).toJsonRequestBody()
 
-        return POST(baseUrl, headers, requestBody)
+        return POST(API_URL, headers, requestBody)
     }
     override fun searchMangaParse(response: Response): MangasPage {
         val page = json.decodeFromString<PageWrapperDto<MangaTachiyomiSearchDto<MangaTachiyomiInfoDto>>>(response.body.string())
@@ -214,7 +214,7 @@ abstract class Senkuro(
             FetchDetailsVariables(mangaId = manga.url.split(",,")[0]),
         ).toJsonRequestBody()
 
-        return POST(baseUrl, headers, requestBody)
+        return POST(API_URL, headers, requestBody)
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
@@ -222,7 +222,7 @@ abstract class Senkuro(
         return series.data.mangaTachiyomiInfo.toSManga()
     }
 
-    override fun getMangaUrl(manga: SManga) = baseUrl.replace("api.", "").replace("/graphql", "/manga/") + manga.url.split(",,")[1]
+    override fun getMangaUrl(manga: SManga) = API_URL.replace("api.", "").replace("/graphql", "/manga/") + manga.url.split(",,")[1]
 
     // Chapters
     private val simpleDateFormat by lazy { SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S", Locale.ROOT) }
@@ -263,7 +263,7 @@ abstract class Senkuro(
             FetchDetailsVariables(mangaId = manga.url.split(",,")[0]),
         ).toJsonRequestBody()
 
-        return POST(baseUrl, headers, requestBody)
+        return POST(API_URL, headers, requestBody)
     }
 
     // Pages
@@ -274,12 +274,12 @@ abstract class Senkuro(
             FetchChapterPagesVariables(mangaId = mangaChapterId[0],chapterId = mangaChapterId[2]),
         ).toJsonRequestBody()
 
-        return POST(baseUrl, headers, requestBody)
+        return POST(API_URL, headers, requestBody)
     }
 
     override fun getChapterUrl(chapter: SChapter): String {
         val mangaChapterSlug = chapter.url.split(",,")
-        return baseUrl.replace("api.", "").replace("/graphql", "/manga/") + mangaChapterSlug[1] + "/chapters/" + mangaChapterSlug[3]
+        return API_URL.replace("api.", "").replace("/graphql", "/manga/") + mangaChapterSlug[1] + "/chapters/" + mangaChapterSlug[3]
     }
 
     override fun pageListParse(response: Response): List<Page> {
@@ -299,7 +299,7 @@ abstract class Senkuro(
 
     // Filters
     private fun fetchTachiyomiSearchFilters() {
-        val responseBody = client.newCall(POST(baseUrl,headers,GraphQL(
+        val responseBody = client.newCall(POST(API_URL,headers,GraphQL(
             FILTERS_QUERY,
             SearchVariables(),
         ).toJsonRequestBody())).execute().body.string()
@@ -396,6 +396,7 @@ abstract class Senkuro(
     )
 
     companion object {
+        private const val API_URL = "https://api.senkuro.com/graphql"
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
     }
 

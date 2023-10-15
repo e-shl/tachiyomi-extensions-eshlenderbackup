@@ -12,8 +12,8 @@ class SenkuroGenerator : ThemeSourceGenerator {
     override val baseVersionCode = 1
 
     override val sources = listOf(
-        SingleLang("Senkuro", "https://api.senkuro.com/graphql", "ru", overrideVersionCode = 0),
-        SingleLang("Senkognito", "https://api.senkuro.com/graphql", "ru", isNsfw = true, overrideVersionCode = 0),
+        SingleLang("Senkuro", "https://senkuro.com", "ru", overrideVersionCode = 0),
+        SingleLang("Senkognito", "https://senkuro.com", "ru", isNsfw = true, overrideVersionCode = 0), // https://senkognito.com - public blocked domain
     )
 
     companion object {
