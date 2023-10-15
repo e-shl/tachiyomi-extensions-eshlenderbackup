@@ -265,7 +265,10 @@ class ComX : ParsedHttpSource() {
         manga.description = infoElement.select(".page__header h1").text().replace(" / ", " | ").split(" | ").first() + "\n" +
             if (document.select(".page__list li:contains(Тип выпуска)").text().contains("!!! События в комиксах - ХРОНОЛОГИЯ !!!")) { "Cобытие в комиксах - ХРОНОЛОГИЯ\n" } else { "" } +
             ratingStar + " " + ratingValue + " (голосов: " + ratingVotes + ")\n" +
-            Jsoup.parse(infoElement.select(".page__text ").first()!!.html().replace("<br>", "REPLACbR")).text().replace("REPLACbR", "\n")
+            infoElement.select(".page__text ").first()?.html()?.let { Jsoup.parse(it) }
+                ?.select("body:not(:has(p)),p,br")
+                ?.prepend("\\n")?.text()?.replace("\\n", "\n")?.replace("\n ", "\n")
+                .orEmpty()
 
         var src = infoElement.select(".img-wide img").attr("data-src")
         if (src.isNullOrEmpty()) {
