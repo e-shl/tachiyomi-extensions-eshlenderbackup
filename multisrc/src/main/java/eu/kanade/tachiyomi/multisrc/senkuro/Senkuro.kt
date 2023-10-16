@@ -60,6 +60,8 @@ abstract class Senkuro(
             ),
         ).toJsonRequestBody()
 
+        fetchTachiyomiSearchFilters(page)
+
         return POST(API_URL, headers, requestBody)
     }
     override fun popularMangaParse(response: Response) = searchMangaParse(response)
@@ -72,6 +74,9 @@ abstract class Senkuro(
     // Search
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+
+        fetchTachiyomiSearchFilters(page)
+
         val includeGenres = mutableListOf<String>()
         val excludeGenres = mutableListOf<String>()
         val includeTags = mutableListOf<String>()
@@ -174,10 +179,6 @@ abstract class Senkuro(
         val page = json.decodeFromString<PageWrapperDto<MangaTachiyomiSearchDto<MangaTachiyomiInfoDto>>>(response.body.string())
         val mangasList = page.data.mangaTachiyomiSearch.mangas.map {
             it.toSManga()
-        }
-
-        if (genresList.isEmpty() or tagsList.isEmpty()) {
-            fetchTachiyomiSearchFilters()
         }
 
         return MangasPage(mangasList, mangasList.isNotEmpty())
@@ -309,32 +310,42 @@ abstract class Senkuro(
     }
 
     // Filters
-    private fun fetchTachiyomiSearchFilters() {
-        val responseBody = client.newCall(
-            POST(
-                API_URL,
-                headers,
-                GraphQL(
-                    FILTERS_QUERY,
-                    SearchVariables(),
-                ).toJsonRequestBody(),
-            ),
-        ).execute().body.string()
-
-        val filterDto = json.decodeFromString<PageWrapperDto<MangaTachiyomiSearchFilters>>(responseBody).data.mangaTachiyomiSearchFilters
-
-        genresList = filterDto.genres.filterNot { name == "Senkuro" && senkuroExcludeGenres.contains(it.slug) }.map { genre ->
-            FilterersTri(genre.titles.find { it.lang == "RU" }!!.content.capitalize(), genre.slug)
-        }
-
-        tagsList = filterDto.tags.map { tag ->
-            FilterersTri(tag.titles.find { it.lang == "RU" }!!.content.capitalize(), tag.slug)
-        }
-    }
-
     // Filters are fetched immediately once an extension loads
     // We're only able to get filters after a loading the manga directory, and resetting
     // the filters is the only thing that seems to reinflate the view
+    private fun fetchTachiyomiSearchFilters(pageRequest:Int) {
+        // The function must be used in PopularMangaRequest and searchMangaRequest to correctly reset the selected filters.
+        if (pageRequest == 1) {
+            val responseBody = client.newCall(
+                POST(
+                    API_URL,
+                    headers,
+                    GraphQL(
+                        FILTERS_QUERY,
+                        SearchVariables(),
+                    ).toJsonRequestBody(),
+                ),
+            ).execute().body.string()
+
+            val filterDto =
+                json.decodeFromString<PageWrapperDto<MangaTachiyomiSearchFilters>>(responseBody).data.mangaTachiyomiSearchFilters
+
+            genresList =
+                filterDto.genres.filterNot { name == "Senkuro" && senkuroExcludeGenres.contains(it.slug) }
+                    .map { genre ->
+                        FilterersTri(
+                            genre.titles.find { it.lang == "RU" }!!.content.capitalize(),
+                            genre.slug
+                        )
+                    }
+
+            tagsList = filterDto.tags.map { tag ->
+                FilterersTri(
+                    tag.titles.find { it.lang == "RU" }!!.content.capitalize(),
+                    tag.slug)
+            }
+        }
+    }
     override fun getFilterList(): FilterList {
         val filters = if (genresList.isEmpty() or tagsList.isEmpty()) {
             listOf(
