@@ -74,7 +74,6 @@ abstract class Senkuro(
     // Search
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-
         fetchTachiyomiSearchFilters(page)
 
         val includeGenres = mutableListOf<String>()
@@ -313,7 +312,7 @@ abstract class Senkuro(
     // Filters are fetched immediately once an extension loads
     // We're only able to get filters after a loading the manga directory, and resetting
     // the filters is the only thing that seems to reinflate the view
-    private fun fetchTachiyomiSearchFilters(pageRequest:Int) {
+    private fun fetchTachiyomiSearchFilters(pageRequest: Int) {
         // The function must be used in PopularMangaRequest and searchMangaRequest to correctly reset the selected filters.
         if (pageRequest == 1) {
             val responseBody = client.newCall(
@@ -335,14 +334,15 @@ abstract class Senkuro(
                     .map { genre ->
                         FilterersTri(
                             genre.titles.find { it.lang == "RU" }!!.content.capitalize(),
-                            genre.slug
+                            genre.slug,
                         )
                     }
 
             tagsList = filterDto.tags.map { tag ->
                 FilterersTri(
                     tag.titles.find { it.lang == "RU" }!!.content.capitalize(),
-                    tag.slug)
+                    tag.slug,
+                )
             }
         }
     }
