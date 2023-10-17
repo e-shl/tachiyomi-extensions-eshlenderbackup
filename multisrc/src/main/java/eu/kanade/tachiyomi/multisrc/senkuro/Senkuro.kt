@@ -347,21 +347,26 @@ abstract class Senkuro(
         }
     }
     override fun getFilterList(): FilterList {
-        val filters = if (genresList.isEmpty() or tagsList.isEmpty()) {
+        val filters = mutableListOf<Filter<*>>()
+        filters += if (genresList.isEmpty() or tagsList.isEmpty()) {
             listOf(
-                Filter.Header("Нажмите сброс, чтобы загрузить все фильтры"),
+                Filter.Separator(),
+                Filter.Header("Нажмите «Сбросить», чтобы загрузить все фильтры"),
+                Filter.Separator(),
             )
         } else {
             listOf(
-                GenreList(getGenreList()),
-                TagList(getTagList()),
-                TypeList(getTypeList()),
-                FormatList(getFormatList()),
-                StatList(getStatList()),
-                StatTranslateList(getStatTranslateList()),
-                AgeList(getAgeList()),
+                GenreList(genresList),
+                TagList(tagsList),
             )
         }
+        filters += listOf(
+            TypeList(getTypeList()),
+            FormatList(getFormatList()),
+            StatList(getStatList()),
+            StatTranslateList(getStatTranslateList()),
+            AgeList(getAgeList()),
+        )
         return FilterList(filters)
     }
 
@@ -376,12 +381,7 @@ abstract class Senkuro(
 
     private var genresList: List<FilterersTri> = listOf()
     private var tagsList: List<FilterersTri> = listOf()
-    private fun getGenreList(): List<FilterersTri> {
-        return genresList
-    }
-    private fun getTagList(): List<FilterersTri> {
-        return tagsList
-    }
+
     private fun getTypeList() = listOf(
         FilterersTri("Манга", "MANGA"),
         FilterersTri("Манхва", "MANHWA"),
