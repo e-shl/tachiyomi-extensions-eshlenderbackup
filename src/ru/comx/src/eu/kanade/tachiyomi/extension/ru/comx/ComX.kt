@@ -272,12 +272,8 @@ class ComX : ParsedHttpSource() {
                 ?.prepend("\\n")?.text()?.replace("\\n", "\n")?.replace("\n ", "\n")
                 .orEmpty()
 
-        var src = ""
-        infoElement.select(".img-wide img").let {
-            src = it.attr("data-src")
-            if (src.isEmpty()) {
-                src = it.attr("src")
-            }
+        val src = infoElement.select(".img-wide img").let {
+            it.attr("data-src").ifEmpty { it.attr("src") }
         }
 
         if (src.contains("://")) {
