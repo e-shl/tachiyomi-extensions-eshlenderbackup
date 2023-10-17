@@ -36,50 +36,50 @@ data class SearchVariables(
 val SEARCH_QUERY: String = buildQuery {
     """
        query searchTachiyomiManga(
-            %query: String,
-            %type: MangaTachiyomiSearchTypeFilter,
-            %status: MangaTachiyomiSearchStatusFilter,
-            %translationStatus: MangaTachiyomiSearchTranslationStatusFilter,
-            %genre: MangaTachiyomiSearchGenreFilter,
-            %tag: MangaTachiyomiSearchTagFilter,
-            %format: MangaTachiyomiSearchGenreFilter,
-            %rating: MangaTachiyomiSearchTagFilter,
-            %offset: Int,
-        ) {
-            mangaTachiyomiSearch(
-                 query:%query,
-                 type: %type,
-                 status: %status,
-                 translationStatus: %translationStatus,
-                 genre: %genre,
-                 tag: %tag,
-                 format: %format,
-                 rating: %rating,
-                 offset: %offset,
-        ) {
-            mangas {
-                id
-                slug
-                originalName {
-                    lang
-                    content
-                }
-                titles {
-                    lang
-                    content
-                }
-                alternativeNames {
-                    lang
-                    content
-                }
-                cover {
-                    original {
-                        url
-                    }
-                }
-            }
-        }
-    }
+                                    %query: String,
+                                    %type: MangaTachiyomiSearchTypeFilter,
+                                    %status: MangaTachiyomiSearchStatusFilter,
+                                    %translationStatus: MangaTachiyomiSearchTranslationStatusFilter,
+                                    %genre: MangaTachiyomiSearchGenreFilter,
+                                    %tag: MangaTachiyomiSearchTagFilter,
+                                    %format: MangaTachiyomiSearchGenreFilter,
+                                    %rating: MangaTachiyomiSearchTagFilter,
+                                    %offset: Int,
+                                ) {
+                                    mangaTachiyomiSearch(
+                                                          query:%query,
+                                                          type: %type,
+                                                          status: %status,
+                                                          translationStatus: %translationStatus,
+                                                          genre: %genre,
+                                                          tag: %tag,
+                                                          format: %format,
+                                                          rating: %rating,
+                                                          offset: %offset,
+                                    ) {
+                                       mangas {
+                                               id
+                                               slug
+                                               originalName {
+                                                             lang
+                                                             content
+                                               }
+                                               titles {
+                                                       lang
+                                                       content
+                                               }
+                                               alternativeNames {
+                                                                 lang
+                                                                 content
+                                               }
+                                               cover {
+                                                      original {
+                                                                url
+                                                      }
+                                               }
+                                       }
+                                    }
+                                }
     """
 }
 
@@ -92,52 +92,54 @@ val DETAILS_QUERY: String = buildQuery {
     """
         query fetchTachiyomiManga(%mangaId: ID!) {
                 mangaTachiyomiInfo(mangaId: %mangaId) {
-                        id
-                        slug
- 	 	                originalName {
- 	 	 	                    lang
-                                content
-                        }
-                        titles {
-                                 lang
-                                 content
-                        }
-                        alternativeNames {
-                                 lang
-                                 content
-                        }
-                        localizations {
-                                 lang
-                                 description
-                        }
-                        type
-                        rating
-                        status
-                        formats
-                        genres {  slug
-                                titles {
-                                        lang
-                                        content
-                                        }
-                             }
-                        tags {  slug
-                                titles {
-                                        lang
-                                        content
-                                        }
-                             }
-                        translationStatus
-                        cover {
-                                original {
-                                       url
-                                }
-                        }
-                        mainStaff {
-                                roles
-                                person {
-                                            name
-                                       }
-                                  }
+                                                        id
+                                                        slug
+ 	 	                                                originalName {
+ 	 	 	                                                    lang
+                                                                content
+                                                        }
+                                                        titles {
+                                                                 lang
+                                                                 content
+                                                        }
+                                                        alternativeNames {
+                                                                            lang
+                                                                            content
+                                                        }
+                                                        localizations {
+                                                                        lang
+                                                                        description
+                                                        }
+                                                        type
+                                                        rating
+                                                        status
+                                                        formats
+                                                        genres {
+                                                                slug
+                                                                titles {
+                                                                        lang
+                                                                        content
+                                                                }
+                                                        }
+                                                        tags {
+                                                                slug
+                                                                titles {
+                                                                        lang
+                                                                        content
+                                                                }
+                                                        }
+                                                        translationStatus
+                                                        cover {
+                                                                original {
+                                                                          url
+                                                                }
+                                                        }
+                                                        mainStaff {
+                                                                    roles
+                                                                    person {
+                                                                            name
+                                                                    }
+                                                        }
                 }
         }
     """
@@ -147,24 +149,24 @@ val CHAPTERS_QUERY: String = buildQuery {
     """
         query fetchTachiyomiChapters(%mangaId: ID!) {
                 mangaTachiyomiChapters(mangaId: %mangaId) {
-                        message
-                        chapters {
-                            id
-                            slug
-                            branchId
-                            name
-                            teamIds
-                            number
-                            volume
-                            updatedAt
-                        }
-                        teams {
-                                id
-                                slug
-                                name
-                            }
-                   }
-            }
+                                                            message
+                                                            chapters {
+                                                                        id
+                                                                        slug
+                                                                        branchId
+                                                                        name
+                                                                        teamIds
+                                                                        number
+                                                                        volume
+                                                                        updatedAt
+                                                            }
+                                                            teams {
+                                                                    id
+                                                                    slug
+                                                                    name
+                                                            }
+                }
+        }
     """
 }
 
@@ -176,13 +178,20 @@ data class FetchChapterPagesVariables(
 
 val CHAPTERS_PAGES_QUERY: String = buildQuery {
     """
-        query fetchTachiyomiChapterPages(%mangaId: ID!, %chapterId: ID!) {
-                         mangaTachiyomiChapterPages(mangaId: %mangaId,chapterId: %chapterId) {
-   	                                                            pages {
-                                                                        url
-                                                                 }
-                                        }
-                        }
+        query fetchTachiyomiChapterPages(
+                                         %mangaId: ID!,
+                                         %chapterId: ID!
+                                         ) {
+                                            mangaTachiyomiChapterPages(
+                                                                        mangaId: %mangaId,
+                                                                        chapterId: %chapterId
+                                                                        )
+                                                                        {
+   	                                                                         pages {
+                                                                                    url
+                                                                             }
+                                                                        }
+                                            }
     """
 }
 
@@ -214,22 +223,22 @@ val FILTERS_QUERY: String = buildQuery {
         query fetchTachiyomiSearchFilters {
                 mangaTachiyomiSearchFilters {
                                 genres {
-                                id
-                                slug
-                                titles {
-                                    lang
-                                    content
+                                        id
+                                        slug
+                                        titles {
+                                                lang
+                                                content
+                                        }
                                 }
-                              }
-                              tags {
-                                id
-                                slug
-                                titles {
-                                    lang
-                                    content
+                                tags {
+                                        id
+                                        slug
+                                        titles {
+                                                lang
+                                                content
+                                        }
                                 }
-                              }
-                            }
-                          }
+                }
+        }
     """
 }
