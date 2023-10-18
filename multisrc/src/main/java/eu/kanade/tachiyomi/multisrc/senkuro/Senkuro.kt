@@ -377,7 +377,7 @@ abstract class Senkuro(
     private class FormatList(formats: List<FilterersTri>) : Filter.Group<FilterersTri>("Формат", formats)
     private class StatList(status: List<FilterersTri>) : Filter.Group<FilterersTri>("Статус", status)
     private class StatTranslateList(tstatus: List<FilterersTri>) : Filter.Group<FilterersTri>("Статус перевода", tstatus)
-    private class AgeList(ages: List<FilterersTri>) : Filter.Group<FilterersTri>("Возрастное ограничени", ages)
+    private class AgeList(ages: List<FilterersTri>) : Filter.Group<FilterersTri>("Возрастное ограничение", ages)
 
     private var genresList: List<FilterersTri> = listOf()
     private var tagsList: List<FilterersTri> = listOf()
