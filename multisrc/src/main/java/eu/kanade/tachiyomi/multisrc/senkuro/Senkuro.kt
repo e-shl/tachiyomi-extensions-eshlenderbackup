@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.multisrc.senkuro
 
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
@@ -72,10 +73,16 @@ abstract class Senkuro(
     override fun latestUpdatesParse(response: Response): MangasPage = throw NotImplementedError("Unused")
 
     // Search
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+        fetchTachiyomiSearchFilters(page) // reset filters before sending searchMangaRequest
+        return client.newCall(searchMangaRequest(page, query, filters))
+            .asObservableSuccess()
+            .map { response ->
+                searchMangaParse(response)
+            }
+    }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        fetchTachiyomiSearchFilters(page)
-
         val includeGenres = mutableListOf<String>()
         val excludeGenres = mutableListOf<String>()
         val includeTags = mutableListOf<String>()
@@ -313,7 +320,7 @@ abstract class Senkuro(
     // We're only able to get filters after a loading the manga directory, and resetting
     // the filters is the only thing that seems to reinflate the view
     private fun fetchTachiyomiSearchFilters(pageRequest: Int) {
-        // The function must be used in PopularMangaRequest and searchMangaRequest to correctly reset the selected filters.
+        // The function must be used in PopularMangaRequest and fetchSearchManga to correctly/guaranteed reset the selected filters!
         if (pageRequest == 1) {
             val responseBody = client.newCall(
                 POST(
