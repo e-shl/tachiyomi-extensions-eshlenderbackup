@@ -35,7 +35,7 @@ data class SearchVariables(
 
 val SEARCH_QUERY: String = buildQuery {
     """
-       query searchTachiyomiManga(
+        query searchTachiyomiManga(
             %query: String,
             %type: MangaTachiyomiSearchTypeFilter,
             %status: MangaTachiyomiSearchStatusFilter,
@@ -45,42 +45,41 @@ val SEARCH_QUERY: String = buildQuery {
             %format: MangaTachiyomiSearchGenreFilter,
             %rating: MangaTachiyomiSearchTagFilter,
             %offset: Int,
-       ) {
-          mangaTachiyomiSearch(
-              query:%query,
-              type: %type,
-              status: %status,
-              translationStatus: %translationStatus,
-              genre: %genre,
-              tag: %tag,
-              format: %format,
-              rating: %rating,
-              offset: %offset,
-          ) {
-             mangas {
-                     id
-                     slug
-                     originalName {
-                                   lang
-                                   content
-                     }
-                     titles {
-                             lang
-                             content
-                     }
-                     alternativeNames {
-             lang
-             content
-                     }
-                     cover {
-                            original {
-                                      url
-                            }
-                     }
-             }
-          }
-      }
-
+        ) {
+            mangaTachiyomiSearch(
+                query:%query,
+                type: %type,
+                status: %status,
+                translationStatus: %translationStatus,
+                genre: %genre,
+                tag: %tag,
+                format: %format,
+                rating: %rating,
+                offset: %offset,
+            ) {
+                mangas {
+                    id
+                    slug
+                    originalName {
+                        lang
+                        content
+                    }
+                    titles {
+                        lang
+                        content
+                    }
+                    alternativeNames {
+                        lang
+                        content
+                    }
+                    cover {
+                        original {
+                            url
+                        }
+                    }
+                }
+            }
+        }
     """
 }
 
