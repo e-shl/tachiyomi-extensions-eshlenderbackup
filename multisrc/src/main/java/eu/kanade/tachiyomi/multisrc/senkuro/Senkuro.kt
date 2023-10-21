@@ -297,7 +297,7 @@ abstract class Senkuro(
 
     override fun getChapterUrl(chapter: SChapter): String {
         val mangaChapterSlug = chapter.url.split(",,")
-        return baseUrl+ "/manga/" + mangaChapterSlug[1] + "/chapters/" + mangaChapterSlug[3]
+        return baseUrl + "/manga/" + mangaChapterSlug[1] + "/chapters/" + mangaChapterSlug[3]
     }
 
     override fun pageListParse(response: Response): List<Page> {
