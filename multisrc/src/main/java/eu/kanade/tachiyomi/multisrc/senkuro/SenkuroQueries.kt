@@ -221,24 +221,24 @@ data class MangaTachiyomiSearchFilters(
 val FILTERS_QUERY: String = buildQuery {
     """
         query fetchTachiyomiSearchFilters {
-                mangaTachiyomiSearchFilters {
-                                genres {
-                                        id
-                                        slug
-                                        titles {
-                                                lang
-                                                content
-                                        }
-                                }
-                                tags {
-                                        id
-                                        slug
-                                        titles {
-                                                lang
-                                                content
-                                        }
-                                }
+            mangaTachiyomiSearchFilters {
+                genres {
+                    id
+                    slug
+                    titles {
+                        lang
+                        content
+                    }
                 }
+                tags {
+                    id
+                    slug
+                    titles {
+                        lang
+                        content
+                    }
+                }
+            }
         }
     """
 }
