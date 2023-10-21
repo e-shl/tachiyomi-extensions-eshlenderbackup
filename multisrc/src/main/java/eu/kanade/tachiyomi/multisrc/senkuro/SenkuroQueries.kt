@@ -148,24 +148,24 @@ val DETAILS_QUERY: String = buildQuery {
 val CHAPTERS_QUERY: String = buildQuery {
     """
         query fetchTachiyomiChapters(%mangaId: ID!) {
-                mangaTachiyomiChapters(mangaId: %mangaId) {
-                                  message
-                                  chapters {
-                                              id
-                                              slug
-                                              branchId
-                                              name
-                                              teamIds
-                                              number
-                                              volume
-                                              updatedAt
-                                  }
-                                  teams {
-                                          id
-                                          slug
-                                          name
-                                  }
+            mangaTachiyomiChapters(mangaId: %mangaId) {
+                message
+                chapters {
+                    id
+                    slug
+                    branchId
+                    name
+                    teamIds
+                    number
+                    volume
+                    updatedAt
                 }
+                teams {
+                    id
+                    slug
+                    name
+                }
+            }
         }
 
     """
