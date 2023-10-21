@@ -19,7 +19,7 @@ class Senkognito : Senkuro("Senkognito", "https://senkognito.com", "ru") {
         val domainRedirect = androidx.preference.CheckBoxPreference(screen.context).apply {
             key = redirect_PREF
             title = "Домен Senkognito"
-            summary = "Использовать для браузера домен Senkognito"
+            summary = "Отключите если домен Senkognito не доступен в браузере/webview."
             setDefaultValue(true)
             setOnPreferenceChangeListener { _, newValue ->
                 val warning = "Для смены домена необходимо перезапустить приложение с полной остановкой."
