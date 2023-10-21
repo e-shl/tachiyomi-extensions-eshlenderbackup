@@ -271,7 +271,7 @@ abstract class Senkuro(
                 name = "${chapter.volume}. Глава ${chapter.number} " + (chapter.name ?: "")
                 url = "${manga.url},,${chapter.id},,${chapter.slug}" // mangaId[0],,mangaSlug[1],,chapterId[2],,chapterSlug[3]
                 date_upload = parseDate(chapter.updatedAt)
-                scanlator = teamsList.find { it.id == chapter.teamIds[0] }!!.name
+                scanlator = teamsList.filter { chapter.teamIds.contains(it.id) }.joinToString { it.name }
             }
         }
     }
