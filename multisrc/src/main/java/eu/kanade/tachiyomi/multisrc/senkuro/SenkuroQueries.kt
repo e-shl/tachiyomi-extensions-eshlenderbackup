@@ -91,58 +91,57 @@ data class FetchDetailsVariables(
 val DETAILS_QUERY: String = buildQuery {
     """
         query fetchTachiyomiManga(%mangaId: ID!) {
-                mangaTachiyomiInfo(mangaId: %mangaId) {
-                              id
-                              slug
-                            originalName {
-                                      lang
-                                      content
-                              }
-                              titles {
-                                       lang
-                                       content
-                              }
-                              alternativeNames {
-                                                  lang
-                                                  content
-                              }
-                              localizations {
-                                              lang
-                                              description
-                              }
-                              type
-                              rating
-                              status
-                              formats
-                              genres {
-                                      slug
-                                      titles {
-                                              lang
-                                              content
-                                      }
-                              }
-                              tags {
-                                      slug
-                                      titles {
-                                              lang
-                                              content
-                                      }
-                              }
-                              translationStatus
-                              cover {
-                                      original {
-                                                url
-                                      }
-                              }
-                              mainStaff {
-                                          roles
-                                          person {
-                                                  name
-                                          }
-                              }
+            mangaTachiyomiInfo(mangaId: %mangaId) {
+                id
+                slug
+                originalName {
+                    lang
+                    content
                 }
+                titles {
+                    lang
+                    content
+                }
+                alternativeNames {
+                    lang
+                    content
+                }
+                localizations {
+                    lang
+                    description
+                }
+                type
+                rating
+                status
+                formats
+                genres {
+                    slug
+                    titles {
+                        lang
+                        content
+                    }
+                }
+                tags {
+                    slug
+                    titles {
+                        lang
+                        content
+                    }
+                }
+                translationStatus
+                cover {
+                  original {
+                      url
+                  }
+                }
+                mainStaff {
+                    roles
+                    person {
+                        name
+                    }
+                }
+            }
         }
-
     """
 }
 
