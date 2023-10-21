@@ -180,20 +180,18 @@ data class FetchChapterPagesVariables(
 val CHAPTERS_PAGES_QUERY: String = buildQuery {
     """
         query fetchTachiyomiChapterPages(
-                 %mangaId: ID!,
-                 %chapterId: ID!
-               ) {
-                  mangaTachiyomiChapterPages(
-                    mangaId: %mangaId,
-                    chapterId: %chapterId
-                  )
-                    {
-                      pages {
-                            url
-                      }
-                    }
-                  }
-
+             %mangaId: ID!,
+             %chapterId: ID!
+        ) {
+            mangaTachiyomiChapterPages(
+                mangaId: %mangaId,
+                chapterId: %chapterId
+            ) {
+                pages {
+                    url
+                }
+            }
+        }
     """
 }
 
