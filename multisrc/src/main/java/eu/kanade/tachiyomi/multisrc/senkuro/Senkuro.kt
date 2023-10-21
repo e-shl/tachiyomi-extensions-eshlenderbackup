@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.multisrc.senkuro
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -28,9 +29,9 @@ import java.util.Locale
 
 abstract class Senkuro(
     override val name: String,
-    final override val baseUrl: String,
+    override val baseUrl: String,
     final override val lang: String,
-) : HttpSource() {
+) : ConfigurableSource, HttpSource() {
 
     override val supportsLatest = false
 
@@ -239,7 +240,7 @@ abstract class Senkuro(
         return series.data.mangaTachiyomiInfo.toSManga()
     }
 
-    override fun getMangaUrl(manga: SManga) = API_URL.replace("api.", "").replace("/graphql", "/manga/") + manga.url.split(",,")[1]
+    override fun getMangaUrl(manga: SManga) = baseUrl + "/manga/" + manga.url.split(",,")[1]
 
     // Chapters
     private val simpleDateFormat by lazy { SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S", Locale.ROOT) }
@@ -296,7 +297,7 @@ abstract class Senkuro(
 
     override fun getChapterUrl(chapter: SChapter): String {
         val mangaChapterSlug = chapter.url.split(",,")
-        return API_URL.replace("api.", "").replace("/graphql", "/manga/") + mangaChapterSlug[1] + "/chapters/" + mangaChapterSlug[3]
+        return baseUrl+ "/manga/" + mangaChapterSlug[1] + "/chapters/" + mangaChapterSlug[3]
     }
 
     override fun pageListParse(response: Response): List<Page> {
